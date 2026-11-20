@@ -104,7 +104,7 @@ window.frontendLogger = new FrontendLogger();
 async function detectLocation() {
   const statusIndicator = document.getElementById("country-status");
   const countrySelect = document.getElementById("url-country");
-  const GEO_FETCH_API_KEY = '4d32f0da00224e50884faa071df764b9';
+  const GEO_FETCH_API_KEY = process.env.GEO_FETCH_API_KEY;
 
   statusIndicator.textContent = "🔍 Detecting...";
   statusIndicator.className = "status-indicator detecting";

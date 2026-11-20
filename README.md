@@ -39,6 +39,9 @@ A web application for managing campaign URLs, resolving redirect chains through 
    RATE_LIMIT=100
    ENABLE_RATE_LIMIT=true/false
 
+   # API to Fetch GEO -> https://api.ipgeolocation.io/
+   GEO_FETCH_API_KEY=replace-with-your-api
+
    # Database connection details
    MYSQL_HOST=127.0.0.1
    MYSQL_PORT=3306
