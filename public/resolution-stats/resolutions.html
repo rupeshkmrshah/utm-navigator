@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Resolution Stats Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google-site-verification" content="asegsNffwXTljUqyu173MU6zcZ0-uSf9heJOXc3K7Jc" />
+  <link rel="stylesheet" href="resolutions.css">
+  <link rel="stylesheet" href="../crm.css">
+  <link rel="stylesheet" href="/components/page-loader/loader.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
+  <script>
+    fetch('/api/auth/me').then(r=>r.json()).then(d=>{ if(!d.user){ location.href='/login'; }});
+  </script>
+  <link id="navbar-css" rel="stylesheet" href="/components/navbar/navbar.css">
+  <link rel="stylesheet" href="/ui.css">
+</head>
+<body class="wp-admin-body">
+  <div id="navbar-root"></div>
+  <div class="floating-navbar">
+    <div class="button-container">
+      <a href="/" class="button" title="Home">
+        <svg class="icon" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M946.5 505L560.1 118.8l-25.9-25.9a31.5 31.5 0 0 0-44.4 0L77.5 505a63.9 63.9 0 0 0-18.8 46c.4 35.2 29.7 63.3 64.9 63.3h42.5V940h691.8V614.3h43.4c17.1 0 33.2-6.7 45.3-18.8a63.6 63.6 0 0 0 18.7-45.3c0-17-6.7-33.1-18.8-45.2zM568 868H456V664h112v204z"/>
+        </svg>
+        <span class="label">Home</span>
+      </a>
+      <a href="../analytics/stats.html" class="button" title="Analytics">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 22h16v-2H4v2zm2-4h2v-7H6v7zm5 0h2V6h-2v12zm5 0h2v-4h-2v4z"/>
+        </svg>
+        <span class="label">Analytics</span>
+      </a>
+      <a href="../time-stats/time-stats.html" class="button" title="Time Stats">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 1.75C6.07 1.75 1.25 6.57 1.25 12.5S6.07 23.25 12 23.25 22.75 18.43 22.75 12.5 17.93 1.75 12 1.75zm0 20c-5.1 0-9.25-4.15-9.25-9.25S6.9 3.25 12 3.25 21.25 7.4 21.25 12.5 17.1 21.75 12 21.75zm.75-14h-1.5v6l5.25 3.15.75-1.23-4.5-2.67V7.75z"/>
+        </svg>
+        <span class="label">Time Stats</span>
+      </a>
+      <a href="/dashboard.html" class="button" title="Activity Dashboard">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+        </svg>
+        <span class="label">Activity</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+        <h1>📊 Resolution Stats</h1>
+        <div class="subtitle">Real-time URL monitoring dashboard</div>
+    </div>
+    
+    <div class="dashboard-stats">
+        <div class="stats-toolbar">
+          <div><span class="eyebrow">MONITORING / URL RESOLUTION</span><h2>Performance overview</h2><p>Live outcomes and request-level failure diagnostics.</p></div>
+          <div class="stats-filters"><label>From <input type="date" id="stats-from"></label><label>To <input type="date" id="stats-to"></label><label>Region <select id="stats-region"><option value="">All regions</option></select></label><button id="stats-apply" class="button">Apply filters</button><button id="stats-clear" class="button secondary">Clear</button></div>
+        </div>
+        <div class="stats-grid">
+        <div class="stat-card success">
+            <div class="stat-icon">✅</div>
+            <div class="stat-number" id="total-success">0</div>
+            <div class="stat-label">Total Success</div>
+        </div>
+        <div class="stat-card failure">
+            <div class="stat-icon">❌</div>
+            <div class="stat-number" id="total-failure">0</div>
+            <div class="stat-label">Total Failure</div>
+        </div>
+        </div>
+
+        <div class="section">
+        <h2 class="section-title">🌐 Regional Performance</h2>
+        <div class="table-container">
+            <table id="region-stats">
+            <thead>
+                <tr>
+                <th>Region</th>
+                <th>Success</th>
+                <th>Failure</th>
+                <th>Success Rate</th>
+                </tr>
+            </thead>
+            <tbody id="region-tbody">
+                <tr>
+                <td colspan="4" class="loading">Loading regional data...</td>
+                </tr>
+            </tbody>
+            </table>
+        </div>
+        </div>
+
+        <div class="section">
+        <h2 class="section-title">🚨 Failed URLs</h2>
+        <div class="table-container">
+            <table>
+            <thead>
+                <tr>
+                <th>URL</th>
+                <th>Region</th>
+                <th>Failure Reason</th>
+                <th>Occurred</th>
+                <th>Request ID</th>
+                </tr>
+            </thead>
+            <tbody id="failed-urls">
+                <tr>
+                <td colspan="5" class="loading">Loading failure data...</td>
+                </tr>
+            </tbody>
+            </table>
+        </div>
+        </div>
+    </div>
+  </div>
+
+  <div class="refresh-indicator" id="refresh-indicator" hidden role="status" aria-live="polite">
+    📡 Refreshing data...
+  </div>
+  <!-- Network Status Toast -->
+  <div id="network-toast" class="network-toast hidden"></div>
+
+  <script>
+    let isLoading = false;
+
+    function showRefreshIndicator() {
+      const indicator = document.getElementById('refresh-indicator');
+      indicator.hidden = false;
+      clearTimeout(showRefreshIndicator.timer);
+      showRefreshIndicator.timer = setTimeout(() => { indicator.hidden = true; }, 1800);
+    }
+
+    function animateNumber(element, newValue) {
+      const currentValue = parseInt(element.textContent) || 0;
+      const increment = newValue > currentValue ? 1 : -1;
+      const duration = 500;
+      const steps = Math.abs(newValue - currentValue);
+      const stepDuration = duration / steps;
+
+      if (steps === 0) return;
+
+      let current = currentValue;
+      const timer = setInterval(() => {
+        current += increment;
+        element.textContent = current;
+        if (current === newValue) {
+          clearInterval(timer);
+        }
+      }, stepDuration);
+    }
+
+    async function loadStats(showIndicator = false) {
+      if (isLoading) return;
+      isLoading = true;
+      
+      try {
+        if (showIndicator) showRefreshIndicator();
+        
+        const params = new URLSearchParams();
+        if (document.getElementById('stats-from').value) params.set('from', document.getElementById('stats-from').value);
+        if (document.getElementById('stats-to').value) params.set('to', document.getElementById('stats-to').value);
+        if (document.getElementById('stats-region').value) params.set('region', document.getElementById('stats-region').value);
+        const res = await fetch(`/api/resolution-stats?${params}` , { cache: 'no-store' });
+        if (!res.ok) throw new Error('Stats request failed');
+        const data = await res.json();
+        const regionSelect = document.getElementById('stats-region');
+        const selectedRegion = regionSelect.value;
+        regionSelect.replaceChildren(new Option('All regions', ''));
+        Object.keys(data.perRegion || {}).sort().forEach(region => regionSelect.add(new Option(region, region)));
+        regionSelect.value = selectedRegion;
+
+        // Animate the main stats
+        animateNumber(document.getElementById("total-success"), data.totalSuccess);
+        animateNumber(document.getElementById("total-failure"), data.totalFailure);
+
+        // Update regional stats
+        const regionTbody = document.getElementById("region-tbody");
+        regionTbody.innerHTML = "";
+
+        for (const [region, stats] of Object.entries(data.perRegion || {})) {
+          const total = stats.success + stats.failure;
+          const successRate = total > 0 ? ((stats.success / total) * 100).toFixed(1) : '0.0';
+          
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><span class="region-badge"></span></td>
+            <td><span class="success">${stats.success}</span></td>
+            <td><span class="failure">${stats.failure}</span></td>
+            <td><strong>${successRate}%</strong></td>
+          `;
+          row.querySelector('.region-badge').textContent = region;
+          regionTbody.appendChild(row);
+        }
+
+        // Update failed URLs
+        const failedTable = document.getElementById("failed-urls");
+        failedTable.innerHTML = "";
+
+        if (data.failedUrls && data.failedUrls.length > 0) {
+          data.failedUrls.forEach(failure => {
+            const row = document.createElement("tr");
+            const urlCell = document.createElement('td'); urlCell.textContent = failure.url;
+            const regionCell = document.createElement('td'); regionCell.textContent = failure.region;
+            const reasonCell = document.createElement('td'); reasonCell.textContent = failure.reason;
+            const timeCell = document.createElement('td'); timeCell.textContent = failure.timestamp ? new Date(failure.timestamp).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) : '—';
+            const requestCell = document.createElement('td'); requestCell.textContent = failure.requestId || '—';
+            row.append(urlCell, regionCell, reasonCell, timeCell, requestCell);
+            failedTable.appendChild(row);
+          });
+        } else {
+          const row = document.createElement("tr");
+          row.innerHTML = `<td colspan="5" class="empty-state">No failed URLs for this date range.</td>`;
+          failedTable.appendChild(row);
+        }
+
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
+        
+        // Show error state
+        document.getElementById("region-tbody").innerHTML = 
+          `<tr><td colspan="5" class="empty-state">⚠️ Failed to load data. Retrying...</td></tr>`;
+        document.getElementById("failed-urls").innerHTML = 
+          `<tr><td colspan="5" class="empty-state">⚠️ Failed to load data. Retrying...</td></tr>`;
+      } finally {
+        isLoading = false;
+      }
+    }
+
+    // Initial load
+    loadStats();
+    document.getElementById('stats-apply').addEventListener('click', () => loadStats(true));
+    document.getElementById('stats-clear').addEventListener('click', () => { document.getElementById('stats-from').value = ''; document.getElementById('stats-to').value = ''; document.getElementById('stats-region').value = ''; loadStats(true); });
+    
+    // Refresh every 10 seconds
+    setInterval(() => loadStats(true), 10000);
+  </script>
+  <script src="/components/page-loader/loader.js"></script>
+  <script src="../components/navbar/navbar.js"></script>
+</body>
+</html>

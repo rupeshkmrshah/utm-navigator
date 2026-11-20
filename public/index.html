@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- <meta name="referrer" content="no-referrer"/> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/5220/5220478.png">
+    <meta name="author" content="Rupesh Shah">
+    <meta name="description" content="A powerful and efficient URL resolution web app service that tracks campaign parameters, handles complex redirects, and validates marketing URLs.">
+    <meta name="google-site-verification" content="dSGzQ4b5qD_pcJ5hgGZy9Uf2THsz_PkmCYO3yOalw1c" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
+    <link rel="stylesheet" href="/components/page-loader/loader.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Include Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+    <!-- Flatpickr CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- Link Stylesheet -->
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./crm.css">
+    <!-- Support xlsx -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <title>URL TraceToEnd</title>
+    <script>
+      fetch('/api/auth/me').then(r=>r.json()).then(d=>{ if(!d.user){ location.href='/login'; }});
+    </script>
+    <link id="navbar-css" rel="stylesheet" href="/components/navbar/navbar.css">
+  <link rel="stylesheet" href="/ui.css">
+</head>
+  <body class="wp-admin-body">
+    <div id="navbar-root"></div>
+    <div class="container">
+      <div class="header">
+        <p class="eyebrow">WORKSPACE / CAMPAIGNS</p>
+        <h1>Campaign URL workspace</h1>
+        <p class="subtitle">
+          Resolve destinations by country proxy, organize campaigns, and review outcomes.
+        </p>
+      </div>
+
+      <div class="form-section">
+        <div class="form-grid">
+          <div class="form-group">
+            <label id="campaign-link" for="campaign-url"
+              >Campaign URL <span style="color: red">*</span></label
+            >
+            <input
+              required
+              id="campaign-url"
+              placeholder="e.g. Campaign URL (https://brand.domain.com/sub-page)"
+            />
+          </div>
+          <div class="form-group">
+            <label for="campaign-tags"
+              >Tags/Notes/Campaign Name <span style="color: red">*</span></label
+            >
+            <input
+              required
+              id="campaign-tags"
+              placeholder="e.g. chat, ai, marketing, manychat campaign"
+            />
+          </div>
+          <div class="form-group">
+            <label for="url-country"
+              >Country <span id="country-status" class="status-indicator"></span
+            ></label>
+            <select id="url-country">
+              <option value="">Detecting location...</option>
+              <option value="IN">🇮🇳 India (IN)</option>
+              <option value="US">🇺🇸 United States (US)</option>
+              <option value="CA">🇨🇦 Canada (CA)</option>
+              <option value="AU">🇦🇺 Australia (AU)</option>
+              <option value="GB">🇬🇧 United Kingdom (GB)</option>
+              <option value="NZ">🇳🇿 New Zealand (NZ)</option>
+              <option value="SG">🇸🇬 Singapore (SG)</option>
+              <option value="HK">🇭🇰 Hong Kong (HK)</option>
+              <option value="MY">🇲🇾 Malaysia (MY)</option>
+              <option value="PH">🇵🇭 Philippines (PH)</option>
+              <option value="ID">🇮🇩 Indonesia (ID)</option>
+              <option value="TH">🇹🇭 Thailand (TH)</option>
+              <option value="VN">🇻🇳 Vietnam (VN)</option>
+              <option value="BR">🇧🇷 Brazil (BR)</option>
+              <option value="AR">🇦🇷 Argentina (AR)</option>
+              <option value="CO">🇨🇴 Colombia (CO)</option>
+              <option value="MX">🇲🇽 Mexico (MX)</option>
+              <option value="PE">🇵🇪 Peru (PE)</option>
+              <option value="CL">🇨🇱 Chile (CL)</option>
+              <option value="EC">🇪🇨 Ecuador (EC)</option>
+              <option value="BO">🇧🇴 Bolivia (BO)</option>
+              <option value="UY">🇺🇾 Uruguay (UY)</option>
+              <option value="PY">🇵🇾 Paraguay (PY)</option>
+              <option value="UZ">🇺🇿 Uzbekistan (UZ)</option>
+              <option value="KZ">🇰🇿 Kazakhstan (KZ)</option>
+              <option value="KG">🇰🇬 Kyrgyzstan (KG)</option>
+              <option value="AZ">🇦🇿 Azerbaijan (AZ)</option>
+              <option value="GE">🇬🇪 Georgia (GE)</option>
+              <option value="AM">🇦🇲 Armenia (AM)</option>
+              <option value="TM">🇹🇲 Turkmenistan (TM)</option>
+              <option value="DE">🇩🇪 Germany (DE)</option>
+              <option value="FR">🇫🇷 France (FR)</option>
+              <option value="IT">🇮🇹 Italy (IT)</option>
+              <option value="ES">🇪🇸 Spain (ES)</option>
+              <option value="NL">🇳🇱 Netherlands (NL)</option>
+              <option value="JP">🇯🇵 Japan (JP)</option>
+              <option value="KR">🇰🇷 South Korea (KR)</option>
+              <option value="RU">🇷🇺 Russia (RU)</option>
+              <option value="CN">🇨🇳 China (CN)</option>
+              <option value="TR">🇹🇷 Turkey (TR)</option>
+              <option value="SA">🇸🇦 Saudi Arabia (SA)</option>
+              <option value="AE">🇦🇪 UAE (AE)</option>
+              <option value="EG">🇪🇬 Egypt (EG)</option>
+              <option value="ZA">🇿🇦 South Africa (ZA)</option>
+              <option value="CZ">🇨🇿 Czechia (CZ)</option>
+              <option value="UA">🇺🇦 Ukraine (UA)</option>
+              <option value="PL">🇵🇱 Poland (PL)</option>
+              <option value="AL">🇦🇱 Albania (AL)</option>
+              <option value="DZ">🇩🇿 Algeria (DZ)</option>
+              <option value="AD">🇦🇩 Andorra (AD)</option>
+              <option value="AT">🇦🇹 Austria (AT)</option>
+              <option value="BS">🇧🇸 Bahamas (BS)</option>
+              <option value="BD">🇧🇩 Bangladesh (BD)</option>
+              <option value="BE">🇧🇪 Belgium (BE)</option>
+              <option value="BZ">🇧🇿 Belize (BZ)</option>
+              <option value="BT">🇧🇹 Bhutan (BT)</option>
+              <option value="NG">🇳🇬 Nigeria (NG)</option>
+              <option value="BG">🇧🇬 Bulgaria (BG)</option>
+              <option value="HU">🇭🇺 Hungary (HU)</option>
+              <option value="TW">🇹🇼 Taiwan (TW)</option>
+              <option value="HR">🇭🇷 Croatia (HR)</option>
+              <option value="BY">🇧🇾 Belarus (BY)</option>
+              <option value="DK">🇩🇰 Denmark (DK)</option>
+              <option value="GR">🇬🇷 Greece (GR)</option>
+              <option value="NO">🇳🇴 Norway (NO)</option>
+              <option value="IS">🇮🇸 Iceland (IS)</option>
+              <option value="SE">🇸🇪 Sweden (SE)</option>
+              <option value="PT">🇵🇹 Portugal (PT)</option>
+              <option value="CH">🇨🇭 Switzerland (CH)</option>
+              <option value="IL">🇮🇱 Israel (IL)</option>
+              <option value="MD">🇲🇩 Moldova (MD)</option>
+              <option value="RO">🇷🇴 Romania (RO)</option>
+              <option value="IE">🇮🇪 Ireland (IE)</option>
+              <option value="LI">🇱🇮 Liechtenstein (LI)</option>
+              <option value="FI">🇫🇮 Finland (FI)</option>
+              <option value="KW">🇰🇼 Kuwait (KW)</option>
+              <option value="EE">🇪🇪 Estonia (EE)</option>
+              <option value="KH">🇰🇭 Cambodia (KH)</option>
+              <option value="OM">🇴🇲 Oman (OM)</option>
+              <option value="LK">🇱🇰 Sri Lanka (LK)</option>
+              <option value="KE">🇰🇪 Kenya (KE) </option>
+              <option value="PA">🇵🇦 Panama (PA)</option>
+              <option value="SK">🇸🇰 Slovakia (SK)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ua-type">User-Agent Type <span style="color: red">*</span></label>
+            <select id="ua-type" required>
+              <option value="" disabled>Select User-Agent Type</option>
+              <option value="random" selected>🔄 Rotating UA</option>
+              <option value="desktop">🖥️ Desktop</option>
+              <option value="mobile">📱 Mobile</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn-primary" onclick="addCampaign()">
+            ✨ Add Campaign
+          </button>
+          <button class="btn-secondary" onclick="exportCSV()">
+            📊 Export CSV
+          </button>
+          <button class="refresh-location" onclick="detectLocation()">
+            🌍 Refresh Location
+          </button>
+          <select
+            class="custom-select"
+            id="sortDate"
+            onchange="sortTableByDate()"
+          >
+            <option value="newest">📅 Sort by Newest</option>
+            <option value="oldest">📅 Sort by Oldest</option>
+            <option value="import">📥 Sort by Import Order</option>
+          </select>
+          <div class="filter-group">
+            <input
+              type="text"
+              id="dateRange"
+              placeholder="📆 Filter by Date Range"
+            />
+            <button
+              onclick="clearDateFilter()"
+              class="clear-date-btn"
+            >
+              ❌ Clear Date Filter
+            </button>
+          </div>
+        </div>
+        <div class="form-group file-import">
+          <label for="fileImport"
+            >Import File (Just drop the file rest leave it to me)</label
+          >
+          <input
+            type="file"
+            id="fileImport"
+            accept=".csv, .xlsx"
+            onchange="handleFileImport(event)"
+          />
+        </div>
+      </div>
+
+      <div class="table-section">
+        <div class="table-controls">
+          <input
+            class="search-bar"
+            id="searchInput"
+            onkeyup="filterTable()"
+            placeholder="🔍 Search campaigns, URLs, tags..."
+          />
+          <!-- <button
+            class="refresh-urls-btn"
+            id="refreshAllBtn"
+            onclick="refreshAllUrls()"
+          >
+            🔄 Refresh All URLs
+          </button> -->
+          <button
+            class="btn-warning"
+            id="deleteAllEntries"
+            onclick="deleteTableRows()"
+          >
+            🗑️ Delete All Entries
+          </button>
+        </div>
+
+        <table id="campaignTable">
+          <thead>
+            <tr>
+              <th>📅 Date Added</th>
+              <th>🔗 Campaign URL</th>
+              <th>🎯 Final URL</th>
+              <th>🌏 Proxy Country Check</th>
+              <th>🏷️ Tags/Notes/Campaign Name</th>
+              <th>🖥️ / 📱 UA</th>
+              <th>⚡ Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+
+          <tfoot>
+            <tr id="loadingRow" style="display: none">
+              <td colspan="7" style="text-align: center; font-style: italic">
+                <!-- Loading... -->
+                <div class="loader">
+                  <span class="loader-text">loading...</span>
+                  <span class="load"></span>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+        <nav class="campaign-pagination" aria-label="Campaign pages">
+          <button type="button" id="campaignPrevPage" class="page-buttons" aria-label="Previous campaign page">← Previous</button>
+          <span id="campaignPageInfo" class="page-number" aria-live="polite">Page 1 of 1</span>
+          <button type="button" id="campaignNextPage" class="page-buttons" aria-label="Next campaign page">Next →</button>
+          <label for="campaignPageSize">Rows per page</label>
+          <select id="campaignPageSize" aria-label="Campaign rows per page">
+            <option value="10">10</option><option value="25">25</option><option value="50">50</option>
+          </select>
+        </nav>
+      </div>
+    </div>
+    <div class="floating-navbar">
+      <div class="button-container">
+        <a href="./resolution-stats/resolutions.html" class="button" title="Link">
+          <svg class="icon" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M574.6 266.7c-22.2 0-40.2 18-40.2 40.2s18 40.2 40.2 40.2h163.6c38.6 0 70.1 31.5 70.1 70.1s-31.5 70.1-70.1 70.1H555.4c-61.3 0-111.1 49.8-111.1 111.1s49.8 111.1 111.1 111.1h163.6c22.2 0 40.2-18 40.2-40.2s-18-40.2-40.2-40.2H574.6c-18.3 0-33.1-14.8-33.1-33.1s14.8-33.1 33.1-33.1h182.8c76.5 0 138.7-62.2 138.7-138.7s-62.2-138.7-138.7-138.7H574.6zM449.4 757.3c22.2 0 40.2-18 40.2-40.2s-18-40.2-40.2-40.2H285.8c-38.6 0-70.1-31.5-70.1-70.1s31.5-70.1 70.1-70.1h182.8c61.3 0 111.1-49.8 111.1-111.1S530 314.6 468.7 314.6H305.1c-22.2 0-40.2 18-40.2 40.2s18 40.2 40.2 40.2h163.6c18.3 0 33.1 14.8 33.1 33.1s-14.8 33.1-33.1 33.1H285.8c-76.5 0-138.7 62.2-138.7 138.7s62.2 138.7 138.7 138.7h163.6z"/>
+          </svg>
+          <span class="label">Resolution Stats</span>
+        </a>
+        <a href="../analytics/stats.html" class="button" title="Analytics">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 22h16v-2H4v2zm2-4h2v-7H6v7zm5 0h2V6h-2v12zm5 0h2v-4h-2v4z"/>
+          </svg>
+          <span class="label">Analytics</span>
+        </a>
+        <a href="../time-stats/time-stats.html" class="button" title="Time Stats">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 1.75C6.07 1.75 1.25 6.57 1.25 12.5S6.07 23.25 12 23.25 22.75 18.43 22.75 12.5 17.93 1.75 12 1.75zm0 20c-5.1 0-9.25-4.15-9.25-9.25S6.9 3.25 12 3.25 21.25 7.4 21.25 12.5 17.1 21.75 12 21.75zm.75-14h-1.5v6l5.25 3.15.75-1.23-4.5-2.67V7.75z"/>
+          </svg>
+          <span class="label">Time Stats</span>
+        </a>
+        <a href="/dashboard.html" class="button" title="Activity Dashboard">
+          <svg class="icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+          </svg>
+          <span class="label">Activity</span>
+        </a>
+      </div>
+    </div>
+    <!-- Custom Modal -->
+    <div id="confirmModal">
+      <div class="card">
+        <div class="card-content">
+          <p class="card-heading">Delete all entries?</p>
+          <p class="card-description">Are you sure you want to delete all entries? This action cannot be undone.</p>
+        </div>
+        <div class="card-button-wrapper">
+          <button class="card-button secondary" id="cancelBtn">Cancel</button>
+          <button class="card-button primary" id="deleteBtn">Delete</button>
+        </div>
+        <button class="exit-button" id="exitBtn">
+          <svg height="20px" viewBox="0 0 384 512">
+            <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <!-- Network Status Toast -->
+    <div id="network-toast" class="network-toast hidden"></div>
+    <script src="/components/page-loader/loader.js" defer></script>
+    <script src="./components/navbar/navbar.js" defer></script>
+    <script src="app.js"></script>
+  </body>
+</html>

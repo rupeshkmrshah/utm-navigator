@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Rupesh Shah">
+  <meta name="description" content="Update your profile information">
+  <title>My Account</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/5220/5220478.png">
+  <link rel="stylesheet" href="/components/page-loader/loader.css">
+  <link rel="stylesheet" href="../crm.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
+
+  <script>
+    fetch('/api/auth/me').then(r=>r.json()).then(d=>{ if(!d.user){ location.href='/login'; }});
+  </script>
+  <link id="navbar-css" rel="stylesheet" href="/components/navbar/navbar.css">
+  <link rel="stylesheet" href="/ui.css">
+</head>
+<body class="wp-admin-body">
+  <div id="navbar-root"></div>
+  <div class="container">
+    <div class="header">
+      <h1>👤 My Account</h1>
+      <p class="muted-subtitle">Update your profile information</p>
+    </div>
+    <div class="container1">
+      <div class="card1">
+        <div class="tab" role="tablist" aria-label="Account sections" aria-orientation="vertical">
+          <button type="button" role="tab" aria-selected="true" aria-controls="Dashboard" tabindex="0" class="tablinks active" onclick="openTabs(event, 'Dashboard')" id="defaultOpen">👤 Dashboard</button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="EventLogs" tabindex="-1" class="tablinks" onclick="openTabs(event, 'EventLogs')" id="tab-event-logs">⏳ Event Logs</button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="Analytics" tabindex="-1" class="tablinks" onclick="openTabs(event, 'Analytics')" id="tab-analytics" hidden>📊 Analytics</button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="ResolutionStats" tabindex="-1" class="tablinks" onclick="openTabs(event, 'ResolutionStats')" id="tab-resolution-stats" hidden>📈 Resolution Stats</button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="TimeStats" tabindex="-1" class="tablinks" onclick="openTabs(event, 'TimeStats')" id="tab-time-stats" hidden>⏱️ Time Stats</button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="AllUsers" tabindex="-1" class="tablinks" onclick="openTabs(event, 'AllUsers')" id="tab-all-users" hidden>👥 All Users</button>
+          <button type="button" role="tab" aria-selected="false" aria-controls="SignupApprovals" tabindex="-1" class="tablinks" onclick="openTabs(event, 'SignupApprovals')" id="tab-signup-approvals" hidden>✅ Signup Approvals</button>
+        </div>
+        
+        <div id="Dashboard" class="tabcontent" role="tabpanel" aria-labelledby="defaultOpen" tabindex="0">
+          <h3>Welcome to your account</h3>
+          <p id="my-greet"></p>
+        </div>
+        
+        <div id="EventLogs" class="tabcontent" role="tabpanel" aria-labelledby="tab-event-logs" tabindex="0" hidden>
+          <h3>⏳ Event Logs</h3>
+          <a href="/dashboard.html"><button class="btn">Check Events Logs</button> </a>
+        </div>
+
+        <div id="Analytics" class="tabcontent" role="tabpanel" aria-labelledby="tab-analytics" tabindex="0" hidden>
+          <h3>📊 Analytics</h3>
+          <a href="/analytics/stats.html"><button class="btn">View Analytics</button></a>
+        </div>
+
+        <div id="ResolutionStats" class="tabcontent" role="tabpanel" aria-labelledby="tab-resolution-stats" tabindex="0" hidden>
+          <h3>📈 Resolution Stats</h3>
+          <a href="/resolution-stats/resolutions.html"><button class="btn">View Resolution Stats</button></a>
+        </div>
+
+        <div id="TimeStats" class="tabcontent" role="tabpanel" aria-labelledby="tab-time-stats" tabindex="0" hidden>
+          <h3>⏱️ Time Stats</h3>
+          <a href="/time-stats/time-stats.html"><button class="btn">View Time Stats</button></a>
+        </div>
+
+        <div id="AllUsers" class="tabcontent" role="tabpanel" aria-labelledby="tab-all-users" tabindex="0" hidden>
+          <h3>👥 All Users</h3>
+          <a href="/user-management.html"><button class="btn">Manage Users</button></a>
+        </div>
+
+        <div id="SignupApprovals" class="tabcontent" role="tabpanel" aria-labelledby="tab-signup-approvals" tabindex="0" hidden>
+          <h3>✅ Signup Approvals</h3>
+          <a href="/signup-requests.html"><button class="btn">Review Signups</button></a>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div id="message"></div>
+      <form id="profileForm" class="form-section">
+        <h2>Edit your details 📝</h2>
+        <div class="form-group">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="name" autocomplete="name" placeholder="Your name" required>
+        </div>
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" autocomplete="username" placeholder="Your username" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" autocomplete="email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="password">New password</label>
+          <small class="field-hint">Leave blank to keep your current password.</small>
+          <input type="password" id="password" name="password" autocomplete="new-password" placeholder="Leave blank to keep current password">
+        </div>
+        <button type="submit" class="btn" id="submitBtn">Update Profile</button>
+      </form>
+    </div>
+  </div>
+  <!-- Network Status Toast -->
+  <div id="network-toast" class="network-toast hidden"></div>
+  <script src="/components/page-loader/loader.js"></script>
+  <script src="../components/navbar/navbar.js" defer></script>
+  <script src="my-account.js"></script>
+</body>
+</html>
