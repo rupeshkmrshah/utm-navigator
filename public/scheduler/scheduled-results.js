@@ -16,6 +16,43 @@ function toIST(dateString) {
   return date.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' });
 }
 
+function parseRedirectChain(value, fallbackUrl = '') {
+  let chain = value;
+  if (typeof chain === 'string') {
+    try { chain = JSON.parse(chain); } catch { chain = []; }
+  }
+  if (!Array.isArray(chain)) chain = [];
+  chain = chain.filter(url => typeof url === 'string' && /^https?:\/\//i.test(url));
+  if (!chain.length && isUsableResolvedUrl(fallbackUrl)) chain.push(fallbackUrl);
+  return chain;
+}
+
+function renderScheduledRedirectChain(value, finalUrl = '') {
+  const chain = parseRedirectChain(value, finalUrl);
+  if (!chain.length) return '<span class="muted">No chain captured</span>';
+  const redirects = Math.max(0, chain.length - 1);
+  return `<details class="redirect-chain"><summary>${redirects} redirect${redirects === 1 ? '' : 's'} · ${chain.length} URL${chain.length === 1 ? '' : 's'}</summary><ol>${chain.map(url => `<li><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(url)}</a></li>`).join('')}</ol></details>`;
+}
+
+function getProxyCountryMatchState(result) {
+  const value = result.region_match;
+  if (value === 1 || value === true || value === '1' || result.verification_status === 'match') return 'matched';
+  if (value === 0 || value === false || value === '0' || result.verification_status === 'mismatch') return 'mismatch';
+  return 'unavailable';
+}
+
+function renderProxyCountryCheck(result) {
+  const requested = escapeHtml(String(result.country || '').toUpperCase() || '—');
+  const actual = escapeHtml(String(result.actual_country || '').toUpperCase());
+  const state = getProxyCountryMatchState(result);
+  const label = state === 'matched' ? '✓ MATCHED' : state === 'mismatch' ? '⚠ MISMATCH' : '? UNAVAILABLE';
+  const actualLabel = actual ? `${actual}${result.actual_country_name ? ` · ${escapeHtml(result.actual_country_name)}` : ''}` : (result.actual_country_name ? escapeHtml(result.actual_country_name) : 'Unavailable');
+  const detail = `Requested ${requested} · Actual ${actualLabel}${result.proxy_ip ? ` · IP ${escapeHtml(result.proxy_ip)}` : ''}`;
+  const title = result.verification_error ? `${detail} · ${escapeHtml(result.verification_error)}` : detail;
+  const reason = state === 'unavailable' && result.verification_error ? `<small class="proxy-country-check__reason">${escapeHtml(result.verification_error)}</small>` : '';
+  return `<div class="proxy-country-check" title="${title}"><span class="proxy-country-check__badge proxy-country-check__badge--${state}">${label}</span><small>${detail}</small>${reason}</div>`;
+}
+
 // Pagination functionality
 let currentPage = 1;
 function getPageSize(){
@@ -39,7 +76,7 @@ async function loadResults() {
     renderTable();
   } catch (error) {
     console.error('Error loading results:', error);
-    document.getElementById('tableBody').innerHTML = `<tr><td colspan="${userRole === 'Admin' ? '10' : '9'}">Error loading results.</td></tr>`;
+    document.getElementById('tableBody').innerHTML = `<tr><td colspan="${userRole === 'Admin' ? '12' : '11'}">Error loading results.</td></tr>`;
   }
 }
 
@@ -56,7 +93,7 @@ function renderTable() {
   filteredResults = filterAndSortResults(filteredResults);
 
   if (!Array.isArray(filteredResults) || filteredResults.length === 0) {
-    const colspan = (userRole === 'Admin') ? 10 : 9;
+    const colspan = (userRole === 'Admin') ? 12 : 11;
     tableBody.innerHTML = `<tr>
       <td colspan="${colspan}" style="text-align:center; padding:16px; color:#666;">
         No scheduled results to display.
@@ -78,6 +115,7 @@ function renderTable() {
       <td>${toIST(result.resolved_at)}</td>
       <td>${escapeHtml(result.original_url)}</td>
       <td>${result.final_url === 'Loading...' ? '<span class="status-badge status-loading"><span class="loading-spinner"></span>Loading...</span>' : (isUsableResolvedUrl(result.final_url) ? escapeHtml(result.final_url) : '<span class="muted">Not resolved</span>')}</td>
+      <td>${renderScheduledRedirectChain(result.redirect_chain, result.final_url)}</td>
       <td>${result.status === 'resolved' ? '—' : escapeHtml(result.error_message || 'Resolution failed')}</td>
       <td>
         <select class="country-input" data-result-id="${result.id}">
@@ -146,6 +184,7 @@ function renderTable() {
           <!-- Add all other countries as needed -->
         </select>
       </td>
+      <td>${renderProxyCountryCheck(result)}</td>
       <td class="editable-result-notes" contenteditable="${result.status !== 'cancelled'}" data-result-id="${result.id}" title="Click to edit notes">${escapeHtml(result.notes || '')}</td>
       <td>${escapeHtml(result.uaType || 'uAType Not Found')}</td>
       <td><span class="status status-${escapeHtml(result.status)}">${escapeHtml(result.status)}</span></td>
@@ -216,8 +255,16 @@ async function refreshResult(resultId) {
   renderTable();
 
   try {
-    const finalUrl = await resolveFinalUrl(result.original_url, result.country, result.uaType);
-    if (isUsableResolvedUrl(finalUrl)) {
+    const resolution = await resolveFinalUrlDetails(result.original_url, result.country, result.uaType);
+    const finalUrl = resolution.finalUrl;
+    result.redirect_chain = resolution.redirectChain || [];
+    result.actual_country = resolution.actualCountry || null;
+    result.actual_country_name = resolution.actualCountryName || null;
+    result.proxy_ip = resolution.ip || null;
+    result.region_match = resolution.regionMatch;
+    result.verification_status = resolution.verificationStatus;
+    result.verification_error = resolution.verificationError;
+    if (isUsableResolvedUrl(finalUrl) && !resolution.resolutionFailed) {
       result.final_url = finalUrl;
       result.resolved_at = new Date().toISOString();
       result.status = 'resolved';
@@ -227,11 +274,18 @@ async function refreshResult(resultId) {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         cache: 'no-store',
-        body: JSON.stringify({ finalUrl: result.final_url, status: result.status, country: result.country, uaType: result.uaType, notes: result.notes })
+        body: JSON.stringify({ finalUrl: result.final_url, redirectChain: result.redirect_chain, status: result.status, country: result.country, uaType: result.uaType, notes: result.notes, actualCountry: result.actual_country, actualCountryName: result.actual_country_name, proxyIp: result.proxy_ip, regionMatch: result.region_match, verificationStatus: result.verification_status, verificationError: result.verification_error })
       });
 
     } else {
-      throw new Error('Resolution failed');
+      result.final_url = null;
+      result.status = 'failed';
+      result.error_message = resolution.verificationError || 'Country verification failed.';
+      await fetch(`/api/scheduled-results/${resultId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ finalUrl: null, redirectChain: result.redirect_chain, status: 'failed', errorMessage: result.error_message, country: result.country, uaType: result.uaType, notes: result.notes, actualCountry: result.actual_country, actualCountryName: result.actual_country_name, proxyIp: result.proxy_ip, regionMatch: result.region_match, verificationStatus: result.verification_status, verificationError: result.verification_error })
+      });
     }
   } catch (error) {
     console.error('Refresh failed:', error);
@@ -244,7 +298,7 @@ async function refreshResult(resultId) {
   renderTable();
 }
 
-async function resolveFinalUrl(inputUrl, region = "US", uaType = "random") {
+async function resolveFinalUrlDetails(inputUrl, region = "US", uaType = "random") {
     const fallback = "Resolution failed";
     try {
       const params = new URLSearchParams({
@@ -256,21 +310,22 @@ async function resolveFinalUrl(inputUrl, region = "US", uaType = "random") {
       const response = await fetch(requestUrl, { headers: { 'Accept': 'application/json' } });
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        throw new Error(payload.details || payload.error || `Server responded with ${response.status}`);
+        const reason = payload.details || payload.error || `Server responded with ${response.status}`;
+        return { finalUrl: isUsableResolvedUrl(payload.finalUrl) ? payload.finalUrl : `${fallback}: ${reason}`, redirectChain: payload.redirectChain || [], actualCountry: payload.actualRegion || payload.ipData?.country_code?.toUpperCase() || null, actualCountryName: payload.ipData?.country || null, ip: payload.ipData?.ip || null, regionMatch: payload.regionMatch ?? null, verificationStatus: payload.countryVerificationStatus || 'unavailable', verificationError: payload.countryVerificationError || reason, resolutionFailed: true };
       }
       const data = await response.json();
-      return isUsableResolvedUrl(data.finalUrl) ? data.finalUrl : fallback;
+      return isUsableResolvedUrl(data.finalUrl) ? { finalUrl: data.finalUrl, redirectChain: data.redirectChain || [], actualCountry: data.actualRegion || data.ipData?.country_code?.toUpperCase() || null, actualCountryName: data.ipData?.country || null, ip: data.ipData?.ip || null, regionMatch: data.regionMatch ?? null, verificationStatus: data.countryVerificationStatus || 'unavailable', verificationError: data.countryVerificationError || null, resolutionFailed: false } : { finalUrl: fallback, redirectChain: [], resolutionFailed: true };
       
     } catch (err) {
       console.error("Error resolving URL:", err.message);
-      return `${fallback}: ${err.message}`;
+      return { finalUrl: `${fallback}: ${err.message}`, redirectChain: [], resolutionFailed: true, verificationError: err.message };
     }
 }
 
 function exportCSV() {
   const filteredResults = filterAndSortResults(showAll ? results : results.filter(r => !hiddenResults.includes(r.id))); // Use filtered and sorted data
 
-  const headers = ["Resolved At (IST)", "Original URL", "Final URL", "Failure Reason", "Country", "Notes", "UA Type", "Status"];
+  const headers = ["Resolved At (IST)", "Original URL", "Final URL", "Redirect Chain", "Failure Reason", "Country", "Actual Country", "Proxy IP", "Country Match", "Verification Status", "Verification Error", "Notes", "UA Type", "Status"];
   if (userRole === 'Admin') {
     headers.unshift("Scheduled Job by");
   }
@@ -282,8 +337,14 @@ function exportCSV() {
       toIST(r.resolved_at),
       r.original_url,
       r.final_url || '',
+      parseRedirectChain(r.redirect_chain, r.final_url).join(' -> '),
       r.error_message || '',
       r.country || '',
+      r.actual_country || '',
+      r.proxy_ip || '',
+      getProxyCountryMatchState(r),
+      r.verification_status || 'unavailable',
+      r.verification_error || '',
       r.notes || '',
       r.uaType || '',
       r.status
@@ -321,8 +382,14 @@ function exportXLSX() {
     row["Resolved At (IST)"] = toIST(r.resolved_at);
     row["Original URL"] = r.original_url;
     row["Final URL"] = r.final_url || '';
+    row["Redirect Chain"] = parseRedirectChain(r.redirect_chain, r.final_url).join(' -> ');
     row["Failure Reason"] = r.error_message || '';
     row["Country"] = r.country || '';
+    row["Actual Country"] = r.actual_country || '';
+    row["Proxy IP"] = r.proxy_ip || '';
+    row["Country Match"] = getProxyCountryMatchState(r);
+    row["Verification Status"] = r.verification_status || 'unavailable';
+    row["Verification Error"] = r.verification_error || '';
     row["Notes"] = r.notes || '';
     row["UA Type"] = r.uaType || '';
     row["Status"] = r.status;
@@ -413,7 +480,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const button = event.target.closest('.delete-result-button');
     if (!button) return;
     const resultId = Number(button.dataset.resultId);
-    if (!confirm('Delete this resolution result?')) return;
+    if (!await window.showConfirmModal({ title: 'Delete this resolution result?', message: 'This saved result will be permanently removed.', confirmText: 'Delete result' })) return;
     const response = await fetch(`/api/scheduled-results/${resultId}`, { method: 'DELETE' });
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
@@ -450,7 +517,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   async function hideAllResults() {
-    const confirmed = confirm("Are you sure you want to hide ALL visible scheduled results? (They can be shown again with 'Show All')");
+    const confirmed = await window.showConfirmModal({ title: 'Hide all visible results?', message: "These results will be hidden from this view. You can restore them later with 'Show All'.", confirmText: 'Hide results', tone: 'primary' });
     if (!confirmed) return;
   
     const visibleResults = showAll ? results : results.filter(r => !hiddenResults.includes(r.id));

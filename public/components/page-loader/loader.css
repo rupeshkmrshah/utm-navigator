@@ -47,12 +47,14 @@
   font-size: 1rem;
   font-weight: 500;
   color: #333;
-  font-family: 'Albert Sans', sans-serif;
+  font-family: "Albert Sans", sans-serif;
   text-align: center;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
@@ -90,6 +92,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #page-loader { transition-duration: .01ms; }
-  .spinner { animation:none; }
+  #page-loader {
+    transition-duration: 0.01ms;
+  }
+  .spinner {
+    animation: none;
+  }
 }

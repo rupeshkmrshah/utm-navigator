@@ -1,95 +1,145 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scheduled Resolution Results</title>
-  <link rel="stylesheet" href="../style.css">
-  <link rel="stylesheet" href="/components/page-loader/loader.css">
-  <link rel="stylesheet" href="../crm.css">
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scheduled Resolution Results</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="/components/page-loader/loader.css" />
+    <link rel="stylesheet" href="../crm.css" />
+    <link
+      rel="icon"
+      href="https://cdn-icons-png.flaticon.com/512/5220/5220478.png"
+    />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-  <link id="navbar-css" rel="stylesheet" href="/components/navbar/navbar.css">
-  <link rel="stylesheet" href="/ui.css">
-</head>
-<body class="wp-admin-body">
-  <div id="navbar-root"></div>
+    <link
+      id="navbar-css"
+      rel="stylesheet"
+      href="/components/navbar/navbar.css"
+    />
+    <link rel="stylesheet" href="/ui.css" />
+  </head>
+  <body class="wp-admin-body">
+    <div id="navbar-root"></div>
 
-  <div class="container">
-    <div class="header">
-      <p class="eyebrow">WORKSPACE / RESULTS</p>
-      <h1>Resolution results</h1>
-      <p>Review destinations, failure reasons, regions, and scheduled job outcomes.</p>
-    </div>
-    <div class="table-section">
-      <div class="table-controls">
-        <label for="searchInput">Search Campaigns</label>
-        <input class="search-bar" id="searchInput" placeholder="🔍 Search results...">
-        <div class="filter-group">
-          <input type="text" id="dateRange" placeholder="📆 Filter by Date Range">
-          <button onclick="clearDateFilter()" class="clear-date-btn">❌ Clear Date Filter</button>
+    <div class="container">
+      <div class="header">
+        <p class="eyebrow">WORKSPACE / RESULTS</p>
+        <h1>Resolution results</h1>
+        <p>
+          Review destinations, failure reasons, regions, and scheduled job
+          outcomes.
+        </p>
+      </div>
+      <div class="table-section">
+        <div class="table-controls">
+          <label for="searchInput">Search Campaigns</label>
+          <input
+            class="search-bar"
+            id="searchInput"
+            placeholder="🔍 Search results..."
+          />
+          <div class="filter-group">
+            <input
+              type="text"
+              id="dateRange"
+              placeholder="📆 Filter by Date Range"
+            />
+            <button onclick="clearDateFilter()" class="clear-date-btn">
+              ❌ Clear Date Filter
+            </button>
+          </div>
+          <select class="custom-select" id="sortDate">
+            <option value="newest">📅 Sort by Newest</option>
+            <option value="oldest">📅 Sort by Oldest</option>
+          </select>
+          <select class="custom-select" id="exportFormat">
+            <option value="csv">CSV</option>
+            <option value="xlsx">XLSX</option>
+          </select>
+          <button class="btn-secondary" id="exportButton">📊 Export</button>
+          <!-- <button id="deleteAllButton" class="btn-danger">🗑️ Delete All</button> -->
+          <button id="hideAllButton" class="btn-danger">🗑️ Hide All</button>
+          <button
+            id="showAllButton"
+            class="btn-secondary"
+            style="margin-left: 10px"
+          >
+            👁️ Show All
+          </button>
         </div>
-        <select class="custom-select" id="sortDate">
-          <option value="newest">📅 Sort by Newest</option>
-          <option value="oldest">📅 Sort by Oldest</option>
-        </select>
-        <select class="custom-select" id="exportFormat">
-          <option value="csv">CSV</option>
-          <option value="xlsx">XLSX</option>
-        </select>
-        <button class="btn-secondary" id="exportButton">📊 Export</button>
-	<!-- <button id="deleteAllButton" class="btn-danger">🗑️ Delete All</button> -->
-        <button id="hideAllButton" class="btn-danger">🗑️ Hide All</button>
-        <button id="showAllButton" class="btn-secondary" style="margin-left: 10px;">👁️ Show All</button>
-      </div>
-      <div class="page-size-controls">
-        <label for="pageSizeInput">Rows per page:</label>
-        <input id="pageSizeInput" type="number" min="1" placeholder="Rows per page" style="width: 140px;" value="10"/>
-        <span class="muted" id="count"></span>
-      </div>
+        <div class="page-size-controls">
+          <label for="pageSizeInput">Rows per page:</label>
+          <input
+            id="pageSizeInput"
+            type="number"
+            min="1"
+            placeholder="Rows per page"
+            style="width: 140px"
+            value="10"
+          />
+          <span class="muted" id="count"></span>
+        </div>
 
-      <table id="resultsTable">
-        <thead>
-          <tr>
-            <th class="admin-only">Scheduled Job by</th>
-            <th>Resolved At (IST)</th>
-            <th>Original URL</th>
-            <th>Final URL</th>
-            <th>Failure Reason</th>
-            <th>Country</th>
-            <th>Notes</th>
-            <th>UA</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-        <tfoot>
-          <tr id="loadingRow" style="display: none">
-            <td colspan="10" style="text-align: center; font-style: italic">
-              <div class="loader">
-                <span class="loader-text">loading...</span>
-                <span class="load"></span>
-              </div>
-            </td>
-          </tr>
-        </tfoot>
-      </table>
-      <div class="pagination-controls">
-        <div style="display: flex; justify-content: center; align-items: center; gap: 50px; margin: 16px 0;">
-          <button id="prevPage" class="page-buttons">⬅ Prev</button>
-          <span class="page-number" id="pageInfo">Page 1</span>
-          <button id="nextPage" class="apply-button">Next ➡</button>
+        <table id="resultsTable">
+          <thead>
+            <tr>
+              <th class="admin-only">Scheduled Job by</th>
+              <th>Resolved At (IST)</th>
+              <th>Original URL</th>
+              <th>Final URL</th>
+              <th>Redirect Chain</th>
+              <th>Failure Reason</th>
+              <th>Country</th>
+              <th>🌏 Proxy Country Check</th>
+              <th>Notes</th>
+              <th>UA</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+          <tfoot>
+            <tr id="loadingRow" style="display: none">
+              <td colspan="12" style="text-align: center; font-style: italic">
+                <div class="loader">
+                  <span class="loader-text">loading...</span>
+                  <span class="load"></span>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+        <div class="pagination-controls">
+          <div
+            style="
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              gap: 50px;
+              margin: 16px 0;
+            "
+          >
+            <button id="prevPage" class="page-buttons">⬅ Prev</button>
+            <span class="page-number" id="pageInfo">Page 1</span>
+            <button id="nextPage" class="apply-button">Next ➡</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  <script src="/components/page-loader/loader.js"></script>
-  <script src="../components/navbar/navbar.js" defer></script>
-  <script src="./scheduled-results.js"></script>
-</body>
+    <script src="/components/page-loader/loader.js"></script>
+    <script src="../components/navbar/navbar.js" defer></script>
+    <script src="./scheduled-results.js"></script>
+  </body>
 </html>

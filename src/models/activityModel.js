@@ -1,5 +1,5 @@
-import { getDbPool } from '../db.js';
-import { istDateBoundaryUtc } from '../timezone.js';
+import { getDbPool } from "../db.js";
+import { istDateBoundaryUtc } from "../timezone.js";
 
 function toUtcIsoNow() {
   return new Date().toISOString();
@@ -8,13 +8,23 @@ function toUtcIsoNow() {
 export async function logActivity(userId, action, details = {}) {
   const pool = getDbPool();
   const [res] = await pool.query(
-    'INSERT INTO activity_logs (user_id, action, details, created_at) VALUES (?,?,?,CURRENT_TIMESTAMP)',
-    [userId, action, JSON.stringify(details || {})]
+    "INSERT INTO activity_logs (user_id, action, details, created_at) VALUES (?,?,?,CURRENT_TIMESTAMP)",
+    [userId, action, JSON.stringify(details || {})],
   );
   return res.insertId;
 }
 
-export async function listActivitiesForUserOrAll({ userId, all = false, page = 1, pageSize = 100, actionQuery, usernameQuery, roleQuery, fromDate, toDate }) {
+export async function listActivitiesForUserOrAll({
+  userId,
+  all = false,
+  page = 1,
+  pageSize = 100,
+  actionQuery,
+  usernameQuery,
+  roleQuery,
+  fromDate,
+  toDate,
+}) {
   const pool = getDbPool();
   const offset = (page - 1) * pageSize;
 
@@ -22,42 +32,44 @@ export async function listActivitiesForUserOrAll({ userId, all = false, page = 1
   const params = [];
 
   if (!all) {
-    whereClauses.push('a.user_id = ?');
+    whereClauses.push("a.user_id = ?");
     params.push(userId);
   }
 
-  if (actionQuery && String(actionQuery).trim() !== '') {
-    whereClauses.push('a.action LIKE ?');
+  if (actionQuery && String(actionQuery).trim() !== "") {
+    whereClauses.push("a.action LIKE ?");
     params.push(`%${actionQuery}%`);
   }
 
-  if (usernameQuery && String(usernameQuery).trim() !== '') {
-    whereClauses.push('u.username LIKE ?');
+  if (usernameQuery && String(usernameQuery).trim() !== "") {
+    whereClauses.push("u.username LIKE ?");
     params.push(`%${usernameQuery}%`);
   }
 
-  if (roleQuery && String(roleQuery).trim() !== '') {
-    whereClauses.push('u.role = ?');
+  if (roleQuery && String(roleQuery).trim() !== "") {
+    whereClauses.push("u.role = ?");
     params.push(roleQuery);
   }
 
-  if (fromDate && String(fromDate).trim() !== '') {
+  if (fromDate && String(fromDate).trim() !== "") {
     const boundary = istDateBoundaryUtc(fromDate);
     if (boundary) {
-      whereClauses.push('a.created_at >= ?');
+      whereClauses.push("a.created_at >= ?");
       params.push(boundary);
     }
   }
 
-  if (toDate && String(toDate).trim() !== '') {
+  if (toDate && String(toDate).trim() !== "") {
     const boundary = istDateBoundaryUtc(toDate, 1);
     if (boundary) {
-      whereClauses.push('a.created_at < ?');
+      whereClauses.push("a.created_at < ?");
       params.push(boundary);
     }
   }
 
-  const whereSql = whereClauses.length ? 'WHERE ' + whereClauses.join(' AND ') : '';
+  const whereSql = whereClauses.length
+    ? "WHERE " + whereClauses.join(" AND ")
+    : "";
 
   const rowsSql = `
     SELECT a.id, a.user_id, u.username, u.role, a.action, a.details, a.created_at

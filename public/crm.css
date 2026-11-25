@@ -1,6 +1,8 @@
 :root {
   color-scheme: light;
-  --ui-font: Inter, "Albert Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ui-font:
+    Inter, "Albert Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   --ui-ink: #172235;
   --ui-ink-soft: #34445a;
   --ui-ink-strong: #283a51;
@@ -33,69 +35,103 @@
   --ui-error-line: #edb9bd;
   --ui-error-soft: #fbecee;
   --ui-success-soft: #e9f6ee;
-  --ui-neutral-line: rgba(81,101,128,.18);
-  --ui-blue-line: rgba(21,95,159,.18);
-  --ui-table-head: rgba(235,242,250,.9);
-  --ui-row-hover: rgba(228,239,251,.72);
+  --ui-neutral-line: rgba(81, 101, 128, 0.18);
+  --ui-blue-line: rgba(21, 95, 159, 0.18);
+  --ui-table-head: rgba(235, 242, 250, 0.9);
+  --ui-row-hover: rgba(228, 239, 251, 0.72);
   --ui-placeholder: #59677a;
   --ui-icon-blue: #4e94ce;
   --ui-icon-purple: #6856c9;
   --ui-page-start: #edf3fa;
   --ui-page-mid: #e9eef8;
   --ui-page-end: #f0edfa;
-  --ui-orb-blue: rgba(158,188,241,.42);
-  --ui-orb-purple: rgba(193,172,238,.32);
+  --ui-orb-blue: rgba(158, 188, 241, 0.42);
+  --ui-orb-purple: rgba(193, 172, 238, 0.32);
   --ui-error-dark: #81212b;
   --ui-link-hover: #0b365a;
   --ui-white: #fff;
-  --ui-focus: rgba(21,95,159,.24);
-  --ui-glass-border: rgba(255,255,255,.82);
-  --ui-table-border: rgba(81,101,128,.14);
-  --ui-type-2xs: .7rem;
-  --ui-type-caption: .72rem;
-  --ui-type-xs: .75rem;
-  --ui-type-sm: .8rem;
-  --ui-type-sm-plus: .78rem;
-  --ui-type-mid: .88rem;
-  --ui-type-base: .9rem;
+  --ui-focus: rgba(21, 95, 159, 0.24);
+  --ui-glass-border: rgba(255, 255, 255, 0.82);
+  --ui-table-border: rgba(81, 101, 128, 0.14);
+  --ui-type-2xs: 0.7rem;
+  --ui-type-caption: 0.72rem;
+  --ui-type-xs: 0.75rem;
+  --ui-type-sm: 0.8rem;
+  --ui-type-sm-plus: 0.78rem;
+  --ui-type-mid: 0.88rem;
+  --ui-type-base: 0.9rem;
   --ui-type-normal: 1rem;
-  --ui-type-control: .82rem;
-  --ui-type-label: .84rem;
+  --ui-type-control: 0.82rem;
+  --ui-type-label: 0.84rem;
   --ui-type-lg: 1.15rem;
   --ui-type-title-sm: 1.08rem;
-  --ui-type-title: clamp(1.45rem,2.4vw,2rem);
+  --ui-type-title: clamp(1.45rem, 2.4vw, 2rem);
   --ui-type-icon: 1.4rem;
-  --ui-type-display: clamp(1.5rem,3vw,2.15rem);
+  --ui-type-display: clamp(1.5rem, 3vw, 2.15rem);
   --ui-canvas: #eaf0f8;
-  --ui-glass: rgba(255, 255, 255, .76);
-  --ui-glass-strong: rgba(255, 255, 255, .9);
-  --ui-glass-dark: rgba(17, 27, 45, .88);
-  --ui-line: rgba(81, 101, 128, .2);
-  --ui-line-strong: rgba(67, 86, 111, .32);
-  --ui-shadow-sm: 0 .25rem .8rem rgba(24, 39, 62, .07);
-  --ui-shadow-md: 0 .75rem 2rem rgba(24, 39, 62, .1);
-  --ui-shadow-lg: 0 1.25rem 3.5rem rgba(24, 39, 62, .16);
+  --ui-glass: rgba(255, 255, 255, 0.76);
+  --ui-glass-strong: rgba(255, 255, 255, 0.9);
+  --ui-glass-dark: rgba(17, 27, 45, 0.88);
+  --ui-line: rgba(81, 101, 128, 0.2);
+  --ui-line-strong: rgba(67, 86, 111, 0.32);
+  --ui-shadow-sm: 0 0.25rem 0.8rem rgba(24, 39, 62, 0.07);
+  --ui-shadow-md: 0 0.75rem 2rem rgba(24, 39, 62, 0.1);
+  --ui-shadow-lg: 0 1.25rem 3.5rem rgba(24, 39, 62, 0.16);
   --ui-blur: 1rem;
-  --ui-radius-sm: .55rem;
-  --ui-radius-md: .85rem;
+  --ui-radius-sm: 0.55rem;
+  --ui-radius-md: 0.85rem;
   --ui-radius-lg: 1.15rem;
   --ui-radius-xl: 1.45rem;
-  --ui-space-1: .25rem;
-  --ui-space-2: .5rem;
-  --ui-space-3: .75rem;
+  --ui-space-1: 0.25rem;
+  --ui-space-2: 0.5rem;
+  --ui-space-3: 0.75rem;
   --ui-space-4: 1rem;
   --ui-space-5: 1.25rem;
   --ui-space-6: 1.5rem;
   --ui-space-8: 2rem;
   --ui-space-10: 2.5rem;
   --ui-control-height: 2.75rem;
-  --ui-ease: cubic-bezier(.2,.7,.25,1);
+  --ui-ease: cubic-bezier(0.2, 0.7, 0.25, 1);
 }
 
-*,*::before,*::after { box-sizing:border-box; }
-html { min-height:100%; background:var(--ui-canvas); }
-body { min-height:100vh; margin:0; color:var(--ui-ink); font-family:var(--ui-font); font-size:1rem; line-height:1.55; -webkit-font-smoothing:antialiased; }
-button,input,select,textarea { font:inherit; }
-button,a,input,select,textarea { -webkit-tap-highlight-color:transparent; }
-img,svg,video,canvas { max-width:100%; }
-::selection { color:#102b49; background:rgba(115,177,232,.38); }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  min-height: 100%;
+  background: var(--ui-canvas);
+}
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+  font-size: 1rem;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+::selection {
+  color: #102b49;
+  background: rgba(115, 177, 232, 0.38);
+}

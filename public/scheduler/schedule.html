@@ -1,160 +1,194 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Schedule a Job</title>
-  <link rel="stylesheet" href="../style.css">
-  <link rel="stylesheet" href="/components/page-loader/loader.css">
-  <link rel="stylesheet" href="../crm.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css">
-  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-  <style>
-    .controls{
-      background: #fff;
-      max-width: 100%;
-      padding: 20px;
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      flex-direction: column;
-    }
-    .schedule-btn { background:#4f46e5; color:#fff; border:none; padding:14px 30px; border-radius:8px; cursor:pointer; margin-top: 20px;}
-    .form-group-schedule{
-      display: flex;
-      flex-direction: column;
-      padding-bottom: 20px;
-    }
-    /* .admin-only {
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Schedule a Job</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="/components/page-loader/loader.css" />
+    <link rel="stylesheet" href="../crm.css" />
+    <link
+      rel="icon"
+      href="https://cdn-icons-png.flaticon.com/512/5220/5220478.png"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css"
+    />
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+      .controls {
+        background: #fff;
+        max-width: 100%;
+        padding: 20px;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        flex-direction: column;
+      }
+      .schedule-btn {
+        background: #4f46e5;
+        color: #fff;
+        border: none;
+        padding: 14px 30px;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 20px;
+      }
+      .form-group-schedule {
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 20px;
+      }
+      /* .admin-only {
       display: none;
     } */
-    .btn-danger, .btn-danger:hover{
-      background: none;
-      box-shadow: none;
-    }
-        /* Modal Overlay */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background:rgba(255, 255, 255, 0.246);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      transition: background-color .5s ease-in;
-    }
+      .btn-danger,
+      .btn-danger:hover {
+        background: none;
+        box-shadow: none;
+      }
+      /* Modal Overlay */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(255, 255, 255, 0.246);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        transition: background-color 0.5s ease-in;
+      }
 
-    .modal-content{
-      background: rgba(255, 255, 255, 0.246);
-      backdrop-filter: blur(16px);
-      border-radius: 16px;
-      padding: 30px 40px;
-      max-width: 420px;
-      width: 90%;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.02);
-      box-sizing: border-box;
-    }
+      .modal-content {
+        background: rgba(255, 255, 255, 0.246);
+        backdrop-filter: blur(16px);
+        border-radius: 16px;
+        padding: 30px 40px;
+        max-width: 420px;
+        width: 90%;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        box-sizing: border-box;
+      }
 
-    .modal-content h1 {
-      color: #333;
-      font-size: 1.8rem;
-      margin-bottom: 15px;
-      font-weight: 700;
-    }
+      .modal-content h1 {
+        color: #333;
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+        font-weight: 700;
+      }
 
-    .modal-content p {
-      color: #6b7280;
-      font-size: 1rem;
-      margin-bottom: 20px;
-      line-height: 25px;
-    }
+      .modal-content p {
+        color: #6b7280;
+        font-size: 1rem;
+        margin-bottom: 20px;
+        line-height: 25px;
+      }
 
-    .modal-close-btn {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      color: white;
-      border: none;
-      padding: 12px 40px;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
+      .modal-close-btn {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        border: none;
+        padding: 12px 40px;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
 
-    .modal-close-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    }
-  </style>
-  <link id="navbar-css" rel="stylesheet" href="/components/navbar/navbar.css">
-  <link rel="stylesheet" href="/ui.css">
-</head>
-<body class="wp-admin-body">
-  <div id="navbar-root"></div>
-  <div class="container">
-    <div class="header">
-      <p class="eyebrow">WORKSPACE / AUTOMATION</p>
-      <h1>Resolution jobs</h1>
-      <p>Schedule, monitor, pause, and manage bulk URL resolution.</p>
-    </div>
-    <div id="schedule-notice" class="schedule-notice" role="status" aria-live="polite" hidden></div>
-    <div class="controls">
-      <form id="schedule-form">
-        <div class="form-group-schedule">
-          <label for="file-input">File (CSV or XLSX)</label>
-          <input type="file" id="file-input" accept=".csv, .xlsx" required>
-	  <div id="file-count" style="margin-top: 10px; font-size: 0.9em; color: #555;"></div>
-        </div>
-        <div class="form-group-schedule">
-          <label for="datetime-input">Schedule Time (IST)</label>
-          <input type="datetime-local" id="datetime-input" required>
-        </div>
-        <button type="submit" class="schedule-btn">Schedule Job</button>
-      </form>
+      .modal-close-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+    </style>
+    <link
+      id="navbar-css"
+      rel="stylesheet"
+      href="/components/navbar/navbar.css"
+    />
+    <link rel="stylesheet" href="/ui.css" />
+  </head>
+  <body class="wp-admin-body">
+    <div id="navbar-root"></div>
+    <div class="container">
+      <div class="header">
+        <p class="eyebrow">WORKSPACE / AUTOMATION</p>
+        <h1>Resolution jobs</h1>
+        <p>Schedule, monitor, pause, and manage bulk URL resolution.</p>
+      </div>
+      <div
+        id="schedule-notice"
+        class="schedule-notice"
+        role="status"
+        aria-live="polite"
+        hidden
+      ></div>
       <div class="controls">
-        <div class="table-header-time">
-          <h2>User Details</h2>
+        <form id="schedule-form">
+          <div class="form-group-schedule">
+            <label for="file-input">File (CSV or XLSX)</label>
+            <input type="file" id="file-input" accept=".csv, .xlsx" required />
+            <div
+              id="file-count"
+              style="margin-top: 10px; font-size: 0.9em; color: #555"
+            ></div>
+          </div>
+          <div class="form-group-schedule">
+            <label for="datetime-input">Schedule Time (IST)</label>
+            <input type="datetime-local" id="datetime-input" required />
+          </div>
+          <button type="submit" class="schedule-btn">Schedule Job</button>
+        </form>
+        <div class="controls">
+          <div class="table-header-time">
+            <h2>User Details</h2>
+          </div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th class="admin-only">Scheduled Job by</th>
+                <th>File Name</th>
+                <th>Total URLs</th>
+                <th>Progress</th>
+                <th>Status</th>
+                <th>Scheduled At (IST)</th>
+                <th>Created At (IST)</th>
+                <th>Job actions</th>
+              </tr>
+            </thead>
+            <tbody id="jobs-table-body">
+              <!-- Job rows will be inserted here -->
+            </tbody>
+          </table>
         </div>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th class="admin-only">Scheduled Job by</th>
-	      <th>File Name</th>
-	      <th>Total URLs</th>
-              <th>Progress</th>
-              <th>Status</th>
-              <th>Scheduled At (IST)</th>
-              <th>Created At (IST)</th>
-              <th>Job actions</th>
-            </tr>
-          </thead>
-          <tbody id="jobs-table-body">
-            <!-- Job rows will be inserted here -->
-          </tbody>
-        </table>
       </div>
     </div>
-  </div>
     <!-- Modal for past Datetime schedule restrict-->
-  <div id="pastDateModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <h1>⚠️ Invalid Schedule Time</h1>
-      <p>⏰ Oops! You can’t schedule a job in the past. Please choose a future date and time.</p>
-      <button id="closeModalBtn" class="modal-close-btn">🗓️ Schedule Again!</button>
+    <div id="pastDateModal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <h1>⚠️ Invalid Schedule Time</h1>
+        <p>
+          ⏰ Oops! You can’t schedule a job in the past. Please choose a future
+          date and time.
+        </p>
+        <button id="closeModalBtn" class="modal-close-btn">
+          🗓️ Schedule Again!
+        </button>
+      </div>
     </div>
-  </div>
-  <script src="/components/page-loader/loader.js"></script>
-  <script src="../components/navbar/navbar.js" defer></script>
-  <script src="./schedule.js"></script>
-</body>
+    <script src="/components/page-loader/loader.js"></script>
+    <script src="../components/navbar/navbar.js" defer></script>
+    <script src="./schedule.js"></script>
+  </body>
 </html>

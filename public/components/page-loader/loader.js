@@ -28,7 +28,7 @@
 
   /**
    * Show loader immediately
-   * 
+   *
    */
   function showLoader(message = "Loading, Please Wait...") {
     injectLoader();
@@ -80,7 +80,7 @@
   window.PageLoader = {
     show: showLoader,
     hide: hideLoader,
-    auto: enableAutoLoader
+    auto: enableAutoLoader,
   };
 
   // Show on every page; a short minimum display prevents an imperceptible flash.

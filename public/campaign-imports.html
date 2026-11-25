@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Campaign Import History</title>
+    <link rel="stylesheet" href="/crm.css" />
+    <link rel="stylesheet" href="/components/navbar/navbar.css" />
+    <link rel="stylesheet" href="/components/page-loader/loader.css" />
+    <link rel="stylesheet" href="/ui.css" />
+    <link rel="stylesheet" href="/campaign-imports.css?v=2" />
+    <link
+      rel="icon"
+      href="https://cdn-icons-png.flaticon.com/512/5220/5220478.png"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.min.css"
+    />
+  </head>
+  <body class="wp-admin-body">
+    <div id="navbar-root"></div>
+    <main class="import-history">
+      <header class="import-history__header">
+        <div>
+          <p class="eyebrow">CAMPAIGNS</p>
+          <h1>Import history</h1>
+          <p>Track, manage, and review URL imports.</p>
+        </div>
+        <a class="button" href="/">← Back to campaigns</a>
+      </header>
+      <div class="import-history__toolbar">
+        <label for="importRefreshInterval">Auto refresh</label
+        ><select
+          id="importRefreshInterval"
+          aria-label="Import history auto refresh interval"
+        >
+          <option value="0">Off</option>
+          <option value="10">Every 10 seconds</option>
+          <option value="15">Every 15 seconds</option>
+          <option value="30">Every 30 seconds</option>
+          <option value="60">Every minute</option></select
+        ><button id="importRefreshNow" type="button">↻ Refresh now</button>
+      </div>
+      <section
+        class="import-history__table"
+        aria-label="Campaign import history"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Status</th>
+              <th>Progress</th>
+              <th>Started</th>
+              <th>Finished</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="importHistoryRows">
+            <tr>
+              <td colspan="6" class="import-history__empty">
+                Loading import history…
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <footer class="import-history__footer">
+        <span id="importHistoryPage">Page 1</span>
+        <div>
+          <button id="importPrevious" type="button">← Previous</button>
+          <button id="importNext" type="button">Next →</button>
+        </div>
+      </footer>
+      <p
+        id="importHistoryError"
+        class="import-history__error"
+        role="alert"
+        hidden
+      ></p>
+    </main>
+    <div
+      id="importRefreshIndicator"
+      class="refresh-indicator"
+      hidden
+      role="status"
+      aria-live="polite"
+    >
+      ⟳ Refreshing import history…
+    </div>
+    <script src="/components/page-loader/loader.js" defer></script>
+    <script src="/campaign-imports.js?v=2" defer></script>
+    <script src="/components/navbar/navbar.js"></script>
+  </body>
+</html>

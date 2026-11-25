@@ -1,4 +1,4 @@
-import { getDbPool, handlePoolError } from '../db.js';
+import { getDbPool, handlePoolError } from "../db.js";
 
 /**
  * Creates a new scheduled job in the database.
@@ -11,13 +11,20 @@ import { getDbPool, handlePoolError } from '../db.js';
  * @param {string} jobDetails.scheduledAt - The ISO 8601 string for when the job should run.
  * @returns {Promise<number>} The ID of the newly created job.
  */
-export async function createScheduledJob({ userId, fileName, mimeType, fileContent, scheduledAt, totalUrls }) {
+export async function createScheduledJob({
+  userId,
+  fileName,
+  mimeType,
+  fileContent,
+  scheduledAt,
+  totalUrls,
+}) {
   const pool = getDbPool();
   const connection = await pool.getConnection();
   try {
     const [result] = await connection.query(
-      'INSERT INTO scheduled_jobs (user_id, file_name, mime_type, file_content, scheduled_at, total_urls) VALUES (?, ?, ?, ?, ?, ?)',
-      [userId, fileName, mimeType, fileContent, scheduledAt, totalUrls]
+      "INSERT INTO scheduled_jobs (user_id, file_name, mime_type, file_content, scheduled_at, total_urls) VALUES (?, ?, ?, ?, ?, ?)",
+      [userId, fileName, mimeType, fileContent, scheduledAt, totalUrls],
     );
     return result.insertId;
   } finally {
@@ -53,24 +60,27 @@ export async function getPendingJobs() {
     try {
       // Use pool.query so the driver hands out a fresh working connection
       const [rows] = await pool.query(
-        "SELECT * FROM scheduled_jobs WHERE status = 'pending' AND scheduled_at <= UTC_TIMESTAMP() ORDER BY scheduled_at ASC"
+        "SELECT * FROM scheduled_jobs WHERE status = 'pending' AND scheduled_at <= UTC_TIMESTAMP() ORDER BY scheduled_at ASC",
       );
       return rows;
     } catch (err) {
-      console.error(`[getPendingJobs] Attempt ${attempt} failed:`, err?.code || err?.message);
+      console.error(
+        `[getPendingJobs] Attempt ${attempt} failed:`,
+        err?.code || err?.message,
+      );
 
       const transient = new Set([
-        'PROTOCOL_CONNECTION_LOST',
-        'ECONNRESET',
-        'ETIMEDOUT',
-	'ER_SERVER_SHUTDOWN',
-	'PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR',
-	'PROTOCOL_ENQUEUE_HANDSHAKE_TWICE',
+        "PROTOCOL_CONNECTION_LOST",
+        "ECONNRESET",
+        "ETIMEDOUT",
+        "ER_SERVER_SHUTDOWN",
+        "PROTOCOL_ENQUEUE_AFTER_FATAL_ERROR",
+        "PROTOCOL_ENQUEUE_HANDSHAKE_TWICE",
       ]);
       if (transient.has(err?.code) && attempt < maxRetries) {
         handlePoolError(err);
         const delayMs = attempt * 500;
-        await new Promise(r => setTimeout(r, delayMs));
+        await new Promise((r) => setTimeout(r, delayMs));
         continue;
       }
 
@@ -95,7 +105,10 @@ export async function updateJobStatus({ jobId, status }) {
   const pool = getDbPool();
   const connection = await pool.getConnection();
   try {
-    await connection.query('UPDATE scheduled_jobs SET status = ?, control_requested = IF(? IN (\'paused\', \'cancelled\', \'completed\', \'partially_completed\', \'failed\'), NULL, control_requested), worker_heartbeat_at = IF(? = \'processing\', UTC_TIMESTAMP(), NULL) WHERE id = ?', [status, status, status, jobId]);
+    await connection.query(
+      "UPDATE scheduled_jobs SET status = ?, control_requested = IF(? IN ('paused', 'cancelled', 'completed', 'partially_completed', 'failed'), NULL, control_requested), worker_heartbeat_at = IF(? = 'processing', UTC_TIMESTAMP(), NULL) WHERE id = ?",
+      [status, status, status, jobId],
+    );
   } finally {
     connection.release();
   }
@@ -103,83 +116,186 @@ export async function updateJobStatus({ jobId, status }) {
 
 export async function claimScheduledJob(jobId) {
   const pool = getDbPool();
-  const [result] = await pool.query(`UPDATE scheduled_jobs SET status = 'processing', control_requested = NULL, worker_heartbeat_at = UTC_TIMESTAMP() WHERE id = ? AND status = 'pending' AND scheduled_at <= UTC_TIMESTAMP()`, [jobId]);
+  const [result] = await pool.query(
+    `UPDATE scheduled_jobs SET status = 'processing', control_requested = NULL, worker_heartbeat_at = UTC_TIMESTAMP() WHERE id = ? AND status = 'pending' AND scheduled_at <= UTC_TIMESTAMP()`,
+    [jobId],
+  );
   return result.affectedRows === 1;
 }
 
 export async function touchJobHeartbeat(jobId) {
   const pool = getDbPool();
-  await pool.query(`UPDATE scheduled_jobs SET worker_heartbeat_at = UTC_TIMESTAMP() WHERE id = ? AND status = 'processing'`, [jobId]);
+  await pool.query(
+    `UPDATE scheduled_jobs SET worker_heartbeat_at = UTC_TIMESTAMP() WHERE id = ? AND status = 'processing'`,
+    [jobId],
+  );
 }
 
 export async function updateJobTotalUrls(jobId, totalUrls) {
   const pool = getDbPool();
-  await pool.query('UPDATE scheduled_jobs SET total_urls = ? WHERE id = ? AND status = \'processing\'', [totalUrls, jobId]);
+  await pool.query(
+    "UPDATE scheduled_jobs SET total_urls = ? WHERE id = ? AND status = 'processing'",
+    [totalUrls, jobId],
+  );
 }
 
 export async function pauseJobIfRequested(jobId) {
   const pool = getDbPool();
-  const [result] = await pool.query(`UPDATE scheduled_jobs SET status = 'paused', control_requested = NULL, worker_heartbeat_at = NULL WHERE id = ? AND status = 'processing' AND control_requested = 'pause'`, [jobId]);
+  const [result] = await pool.query(
+    `UPDATE scheduled_jobs SET status = 'paused', control_requested = NULL, worker_heartbeat_at = NULL WHERE id = ? AND status = 'processing' AND control_requested = 'pause'`,
+    [jobId],
+  );
   return result.affectedRows === 1;
 }
 
 export async function cancelJobIfRequested(jobId) {
   const pool = getDbPool();
-  const [result] = await pool.query(`UPDATE scheduled_jobs SET status = 'cancelled', control_requested = NULL, worker_heartbeat_at = NULL WHERE id = ? AND status = 'processing' AND control_requested = 'cancel'`, [jobId]);
+  const [result] = await pool.query(
+    `UPDATE scheduled_jobs SET status = 'cancelled', control_requested = NULL, worker_heartbeat_at = NULL WHERE id = ? AND status = 'processing' AND control_requested = 'cancel'`,
+    [jobId],
+  );
   return result.affectedRows === 1;
 }
 
 export async function finishJobIfUncontrolled(jobId, status) {
   const pool = getDbPool();
-  const [result] = await pool.query(`UPDATE scheduled_jobs SET status = ?, worker_heartbeat_at = NULL WHERE id = ? AND status = 'processing' AND control_requested IS NULL`, [status, jobId]);
+  const [result] = await pool.query(
+    `UPDATE scheduled_jobs SET status = ?, worker_heartbeat_at = NULL WHERE id = ? AND status = 'processing' AND control_requested IS NULL`,
+    [status, jobId],
+  );
   return result.affectedRows === 1;
 }
 
 export async function getJobControl(jobId) {
   const pool = getDbPool();
-  const [rows] = await pool.query('SELECT status, control_requested FROM scheduled_jobs WHERE id = ?', [jobId]);
+  const [rows] = await pool.query(
+    "SELECT status, control_requested FROM scheduled_jobs WHERE id = ?",
+    [jobId],
+  );
   return rows[0] || null;
 }
 
 export async function getJobProgress(jobId) {
   const pool = getDbPool();
-  const [rows] = await pool.query(`SELECT row_index, status FROM scheduled_results WHERE job_id = ? ORDER BY id`, [jobId]);
-  return { processed: rows.length, resolved: rows.filter(row => row.status === 'resolved').length, failed: rows.filter(row => row.status === 'failed').length, completedRowIndexes: rows.filter(row => row.row_index !== null).map(row => Number(row.row_index)), legacyProcessed: rows.filter(row => row.row_index === null).length };
+  const [rows] = await pool.query(
+    `SELECT row_index, status FROM scheduled_results WHERE job_id = ? ORDER BY id`,
+    [jobId],
+  );
+  return {
+    processed: rows.length,
+    resolved: rows.filter((row) => row.status === "resolved").length,
+    failed: rows.filter((row) => row.status === "failed").length,
+    completedRowIndexes: rows
+      .filter((row) => row.row_index !== null)
+      .map((row) => Number(row.row_index)),
+    legacyProcessed: rows.filter((row) => row.row_index === null).length,
+  };
 }
 
-export async function requestJobControl({ jobId, userId, isAdmin = false, action }) {
+export async function requestJobControl({
+  jobId,
+  userId,
+  isAdmin = false,
+  action,
+}) {
   const pool = getDbPool();
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-    const [rows] = await connection.query('SELECT id, status, control_requested FROM scheduled_jobs WHERE id = ? AND (? = 1 OR user_id = ?) FOR UPDATE', [jobId, isAdmin ? 1 : 0, userId]);
-    if (!rows.length) { await connection.rollback(); return { notFound: true }; }
+    const [rows] = await connection.query(
+      "SELECT id, status, control_requested FROM scheduled_jobs WHERE id = ? AND (? = 1 OR user_id = ?) FOR UPDATE",
+      [jobId, isAdmin ? 1 : 0, userId],
+    );
+    if (!rows.length) {
+      await connection.rollback();
+      return { notFound: true };
+    }
     const status = rows[0].status;
     const controlRequested = rows[0].control_requested;
-    if (action === 'pause') {
-      if (status === 'pending') await connection.query(`UPDATE scheduled_jobs SET status = 'paused' WHERE id = ?`, [jobId]);
-      else if (status === 'processing') await connection.query(`UPDATE scheduled_jobs SET control_requested = 'pause' WHERE id = ?`, [jobId]);
-      else { await connection.rollback(); return { invalidState: status }; }
-    } else if (action === 'resume') {
-      if (status === 'paused') await connection.query(`UPDATE scheduled_jobs SET status = 'pending', control_requested = NULL WHERE id = ?`, [jobId]);
-      else if (status === 'processing' && controlRequested === 'pause') await connection.query(`UPDATE scheduled_jobs SET control_requested = NULL WHERE id = ?`, [jobId]);
-      else { await connection.rollback(); return { invalidState: status }; }
-    } else if (action === 'cancel') {
-      if (['completed', 'partially_completed', 'failed', 'cancelled'].includes(status)) { await connection.rollback(); return { invalidState: status }; }
-      if (status === 'processing') await connection.query(`UPDATE scheduled_jobs SET control_requested = 'cancel' WHERE id = ?`, [jobId]);
-      else await connection.query(`UPDATE scheduled_jobs SET status = 'cancelled', control_requested = NULL WHERE id = ?`, [jobId]);
+    if (action === "pause") {
+      if (status === "pending")
+        await connection.query(
+          `UPDATE scheduled_jobs SET status = 'paused' WHERE id = ?`,
+          [jobId],
+        );
+      else if (status === "processing")
+        await connection.query(
+          `UPDATE scheduled_jobs SET control_requested = 'pause' WHERE id = ?`,
+          [jobId],
+        );
+      else {
+        await connection.rollback();
+        return { invalidState: status };
+      }
+    } else if (action === "resume") {
+      if (status === "paused")
+        await connection.query(
+          `UPDATE scheduled_jobs SET status = 'pending', control_requested = NULL WHERE id = ?`,
+          [jobId],
+        );
+      else if (status === "processing" && controlRequested === "pause")
+        await connection.query(
+          `UPDATE scheduled_jobs SET control_requested = NULL WHERE id = ?`,
+          [jobId],
+        );
+      else {
+        await connection.rollback();
+        return { invalidState: status };
+      }
+    } else if (action === "cancel") {
+      if (
+        ["completed", "partially_completed", "failed", "cancelled"].includes(
+          status,
+        )
+      ) {
+        await connection.rollback();
+        return { invalidState: status };
+      }
+      if (status === "processing")
+        await connection.query(
+          `UPDATE scheduled_jobs SET control_requested = 'cancel' WHERE id = ?`,
+          [jobId],
+        );
+      else
+        await connection.query(
+          `UPDATE scheduled_jobs SET status = 'cancelled', control_requested = NULL WHERE id = ?`,
+          [jobId],
+        );
     }
     await connection.commit();
-    return { status: action === 'pause' && status === 'processing' ? 'pause_requested' : action === 'cancel' && status === 'processing' ? 'cancel_requested' : (action === 'resume' ? (status === 'processing' ? 'processing' : 'pending') : action === 'cancel' ? 'cancelled' : 'paused') };
+    return {
+      status:
+        action === "pause" && status === "processing"
+          ? "pause_requested"
+          : action === "cancel" && status === "processing"
+            ? "cancel_requested"
+            : action === "resume"
+              ? status === "processing"
+                ? "processing"
+                : "pending"
+              : action === "cancel"
+                ? "cancelled"
+                : "paused",
+    };
   } catch (error) {
     await connection.rollback();
     throw error;
-  } finally { connection.release(); }
+  } finally {
+    connection.release();
+  }
 }
 
-export async function updateScheduledTime({ jobId, userId, isAdmin = false, scheduledAt }) {
+export async function updateScheduledTime({
+  jobId,
+  userId,
+  isAdmin = false,
+  scheduledAt,
+}) {
   const pool = getDbPool();
-  const [result] = await pool.query(`UPDATE scheduled_jobs SET scheduled_at = ? WHERE id = ? AND (? = 1 OR user_id = ?) AND status IN ('pending', 'paused')`, [scheduledAt, jobId, isAdmin ? 1 : 0, userId]);
+  const [result] = await pool.query(
+    `UPDATE scheduled_jobs SET scheduled_at = ? WHERE id = ? AND (? = 1 OR user_id = ?) AND status IN ('pending', 'paused')`,
+    [scheduledAt, jobId, isAdmin ? 1 : 0, userId],
+  );
   return result.affectedRows === 1;
 }
 
@@ -212,35 +328,85 @@ export async function updateScheduledTime({ jobId, userId, isAdmin = false, sche
 // }
 
 //create schedule results with retries mechanism
-export async function createScheduledResult({ jobId, originalUrl, rowIndex = null, finalUrl, country, uaType, notes, status, errorMessage }) {
+export async function createScheduledResult({
+  jobId,
+  originalUrl,
+  rowIndex = null,
+  finalUrl,
+  redirectChain = [],
+  country,
+  uaType,
+  notes,
+  status,
+  errorMessage,
+  actualCountry = null,
+  actualCountryName = null,
+  proxyIp = null,
+  regionMatch = null,
+  verificationStatus = null,
+  verificationError = null,
+}) {
   const maxRetries = 3;
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const pool = getDbPool();
       const connection = await pool.getConnection();
-      
+
       try {
         const [result] = await connection.query(
-          `INSERT INTO scheduled_results (job_id, original_url, row_index, final_url, country, uaType, notes, status, error_message)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
-           final_url = VALUES(final_url), status = VALUES(status), error_message = VALUES(error_message), resolved_at = CURRENT_TIMESTAMP`,
-          [jobId, originalUrl, rowIndex, status === 'resolved' && isUsableStoredUrl(finalUrl) ? finalUrl : null, country, uaType, notes, status === 'resolved' && isUsableStoredUrl(finalUrl) ? 'resolved' : status, status === 'resolved' && isUsableStoredUrl(finalUrl) ? errorMessage : (errorMessage || 'Invalid final destination')]
+          `INSERT INTO scheduled_results (job_id, original_url, row_index, final_url, redirect_chain, country, uaType, notes, status, error_message, actual_country, actual_country_name, proxy_ip, region_match, verification_status, verification_error)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
+           final_url = VALUES(final_url), redirect_chain = VALUES(redirect_chain), status = VALUES(status), error_message = VALUES(error_message),
+           actual_country = VALUES(actual_country), actual_country_name = VALUES(actual_country_name), proxy_ip = VALUES(proxy_ip),
+           region_match = VALUES(region_match), verification_status = VALUES(verification_status), verification_error = VALUES(verification_error), resolved_at = CURRENT_TIMESTAMP`,
+          [
+            jobId,
+            originalUrl,
+            rowIndex,
+            status === "resolved" && isUsableStoredUrl(finalUrl)
+              ? finalUrl
+              : null,
+            JSON.stringify(Array.isArray(redirectChain) ? redirectChain : []),
+            country,
+            uaType,
+            notes,
+            status === "resolved" && isUsableStoredUrl(finalUrl)
+              ? "resolved"
+              : status,
+            status === "resolved" && isUsableStoredUrl(finalUrl)
+              ? errorMessage
+              : errorMessage || "Invalid final destination",
+            actualCountry,
+            actualCountryName,
+            proxyIp,
+            regionMatch == null ? null : regionMatch ? 1 : 0,
+            verificationStatus,
+            verificationError,
+          ],
         );
         return result.insertId;
       } finally {
         connection.release();
       }
     } catch (err) {
-      console.error(`[createScheduledResult] Attempt ${attempt} failed:`, err?.code || err?.message);
-      
-      if (attempt < maxRetries && ['PROTOCOL_CONNECTION_LOST', 'ECONNRESET', 'ETIMEDOUT'].includes(err?.code)) {
+      console.error(
+        `[createScheduledResult] Attempt ${attempt} failed:`,
+        err?.code || err?.message,
+      );
+
+      if (
+        attempt < maxRetries &&
+        ["PROTOCOL_CONNECTION_LOST", "ECONNRESET", "ETIMEDOUT"].includes(
+          err?.code,
+        )
+      ) {
         handlePoolError(err);
         const delayMs = attempt * 1000; // Exponential backoff
-        await new Promise(r => setTimeout(r, delayMs));
+        await new Promise((r) => setTimeout(r, delayMs));
         continue;
       }
-      
+
       throw err; // Re-throw if max retries reached or non-recoverable error
     }
   }
@@ -270,11 +436,11 @@ export async function listScheduledJobs({ userId } = {}) {
     const params = [];
 
     if (userId) {
-      query += ' WHERE j.user_id = ?';
+      query += " WHERE j.user_id = ?";
       params.push(userId);
     }
 
-    query += ' ORDER BY j.created_at DESC';
+    query += " ORDER BY j.created_at DESC";
 
     const [rows] = await connection.query(query, params);
     return rows;
@@ -304,11 +470,11 @@ export async function getScheduledResults({ userId } = {}) {
     const params = [];
 
     if (userId) {
-      query += ' WHERE j.user_id = ?';
+      query += " WHERE j.user_id = ?";
       params.push(userId);
     }
 
-    query += ' ORDER BY r.resolved_at DESC';
+    query += " ORDER BY r.resolved_at DESC";
 
     const [rows] = await connection.query(query, params);
     return rows;
@@ -326,15 +492,56 @@ export async function getScheduledResults({ userId } = {}) {
  * @param {'resolved'|'failed'} details.status - The new status.
  * @returns {Promise<void>}
  */
-export async function updateScheduledResult({ resultId, finalUrl, status, errorMessage, country, uaType, notes, userId, isAdmin = false }) {
+export async function updateScheduledResult({
+  resultId,
+  finalUrl,
+  redirectChain,
+  status,
+  errorMessage,
+  country,
+  uaType,
+  notes,
+  actualCountry,
+  actualCountryName,
+  proxyIp,
+  regionMatch,
+  verificationStatus,
+  verificationError,
+  userId,
+  isAdmin = false,
+}) {
   const pool = getDbPool();
   const connection = await pool.getConnection();
   try {
     const [result] = await connection.query(
       `UPDATE scheduled_results r JOIN scheduled_jobs j ON r.job_id = j.id
-       SET r.final_url = ?, r.status = ?, r.error_message = ?, r.country = COALESCE(?, r.country), r.uaType = COALESCE(?, r.uaType), r.notes = COALESCE(?, r.notes), r.resolved_at = CURRENT_TIMESTAMP
+       SET r.final_url = ?, r.redirect_chain = COALESCE(?, r.redirect_chain), r.status = ?, r.error_message = ?, r.country = COALESCE(?, r.country), r.uaType = COALESCE(?, r.uaType), r.notes = COALESCE(?, r.notes),
+       r.actual_country = COALESCE(?, r.actual_country), r.actual_country_name = COALESCE(?, r.actual_country_name), r.proxy_ip = COALESCE(?, r.proxy_ip), r.region_match = COALESCE(?, r.region_match), r.verification_status = COALESCE(?, r.verification_status), r.verification_error = COALESCE(?, r.verification_error), r.resolved_at = CURRENT_TIMESTAMP
        WHERE r.id = ? AND (? = 1 OR j.user_id = ?)`,
-      [status === 'resolved' && isUsableStoredUrl(finalUrl) ? finalUrl : null, status === 'resolved' && isUsableStoredUrl(finalUrl) ? 'resolved' : 'failed', status === 'resolved' && isUsableStoredUrl(finalUrl) ? null : (errorMessage || 'Invalid final destination or resolution failed'), country || null, uaType || null, notes ?? null, resultId, isAdmin ? 1 : 0, userId]
+      [
+        status === "resolved" && isUsableStoredUrl(finalUrl) ? finalUrl : null,
+        redirectChain == null
+          ? null
+          : JSON.stringify(Array.isArray(redirectChain) ? redirectChain : []),
+        status === "resolved" && isUsableStoredUrl(finalUrl)
+          ? "resolved"
+          : "failed",
+        status === "resolved" && isUsableStoredUrl(finalUrl)
+          ? null
+          : errorMessage || "Invalid final destination or resolution failed",
+        country || null,
+        uaType || null,
+        notes ?? null,
+        actualCountry || null,
+        actualCountryName || null,
+        proxyIp || null,
+        regionMatch == null ? null : regionMatch ? 1 : 0,
+        verificationStatus || null,
+        verificationError || null,
+        resultId,
+        isAdmin ? 1 : 0,
+        userId,
+      ],
     );
     return result.affectedRows === 1;
   } finally {
@@ -342,9 +549,16 @@ export async function updateScheduledResult({ resultId, finalUrl, status, errorM
   }
 }
 
-export async function deleteScheduledResult({ resultId, userId, isAdmin = false }) {
+export async function deleteScheduledResult({
+  resultId,
+  userId,
+  isAdmin = false,
+}) {
   const pool = getDbPool();
-  const [result] = await pool.query(`DELETE r FROM scheduled_results r JOIN scheduled_jobs j ON r.job_id = j.id WHERE r.id = ? AND (? = 1 OR j.user_id = ?)`, [resultId, isAdmin ? 1 : 0, userId]);
+  const [result] = await pool.query(
+    `DELETE r FROM scheduled_results r JOIN scheduled_jobs j ON r.job_id = j.id WHERE r.id = ? AND (? = 1 OR j.user_id = ?)`,
+    [resultId, isAdmin ? 1 : 0, userId],
+  );
   return result.affectedRows === 1;
 }
 
@@ -364,7 +578,7 @@ export async function deleteAllScheduledResults({ userId, isAdmin = false }) {
       `DELETE sr FROM scheduled_results sr
        JOIN scheduled_jobs sj ON sr.job_id = sj.id
        WHERE (? = 1 OR sj.user_id = ?)`,
-      [isAdmin ? 1 : 0, userId]
+      [isAdmin ? 1 : 0, userId],
     );
   } finally {
     connection.release();
@@ -383,7 +597,10 @@ export async function deleteScheduledJob({ jobId, userId, isAdmin = false }) {
   const pool = getDbPool();
   const connection = await pool.getConnection();
   try {
-    const [result] = await connection.query(`DELETE FROM scheduled_jobs WHERE id = ? AND (? = 1 OR user_id = ?) AND status <> 'processing'`, [jobId, isAdmin ? 1 : 0, userId]);
+    const [result] = await connection.query(
+      `DELETE FROM scheduled_jobs WHERE id = ? AND (? = 1 OR user_id = ?) AND status <> 'processing'`,
+      [jobId, isAdmin ? 1 : 0, userId],
+    );
     return result.affectedRows === 1;
   } finally {
     connection.release();
@@ -391,6 +608,15 @@ export async function deleteScheduledJob({ jobId, userId, isAdmin = false }) {
 }
 
 function isUsableStoredUrl(value) {
-  if (typeof value !== 'string' || !value.trim() || /^(about:blank|chrome-error:\/\/)/i.test(value.trim())) return false;
-  try { return ['http:', 'https:'].includes(new URL(value).protocol); } catch { return false; }
+  if (
+    typeof value !== "string" ||
+    !value.trim() ||
+    /^(about:blank|chrome-error:\/\/)/i.test(value.trim())
+  )
+    return false;
+  try {
+    return ["http:", "https:"].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
 }

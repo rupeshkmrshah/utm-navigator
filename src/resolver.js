@@ -1,5 +1,5 @@
-import 'dotenv/config';
-import puppeteer from 'puppeteer-core';
+import "dotenv/config";
+import puppeteer from "puppeteer-core";
 
 export function getRegionZoneMap() {
   return {
@@ -64,7 +64,7 @@ export function getRegionZoneMap() {
     PA: process.env.BRIGHTDATA_PA_PROXY,
     HR: process.env.BRIGHTDATA_HR_PROXY,
     SK: process.env.BRIGHTDATA_SK_PROXY,
-    VN: process.env.BRIGHTDATA_VN_PROXY
+    VN: process.env.BRIGHTDATA_VN_PROXY,
   };
 }
 
@@ -80,7 +80,7 @@ const userAgents = {
     "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
   ],
   mobile: [
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
@@ -93,40 +93,68 @@ const userAgents = {
     "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
     "Mozilla/5.0 (Linux; Android 14; SAMSUNG SM-G991B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/24.0 Chrome/124.0.0.0 Mobile Safari/537.36",
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/126.0 Mobile/15E148 Safari/605.1.15",
-    "Mozilla/5.0 (Linux; Android 14; OnePlus 12) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
-  ]
+    "Mozilla/5.0 (Linux; Android 14; OnePlus 12) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36",
+  ],
 };
 
-const browserReuseEnabled = String(process.env.BROWSER_REUSE_ENABLED || 'false').toLowerCase() === 'true';
+const browserReuseEnabled =
+  String(process.env.BROWSER_REUSE_ENABLED || "false").toLowerCase() === "true";
 const reusedBrowsers = new Map();
-const maxActiveResolutions = Number.isInteger(Number(process.env.MAX_ACTIVE_RESOLUTIONS)) ? Math.max(1, Number(process.env.MAX_ACTIVE_RESOLUTIONS)) : 12;
-const maxActivePerRegion = Number.isInteger(Number(process.env.MAX_ACTIVE_PER_REGION)) ? Math.max(1, Number(process.env.MAX_ACTIVE_PER_REGION)) : 3;
+const maxActiveResolutions = Number.isInteger(
+  Number(process.env.MAX_ACTIVE_RESOLUTIONS),
+)
+  ? Math.max(1, Number(process.env.MAX_ACTIVE_RESOLUTIONS))
+  : 12;
+const maxActivePerRegion = Number.isInteger(
+  Number(process.env.MAX_ACTIVE_PER_REGION),
+)
+  ? Math.max(1, Number(process.env.MAX_ACTIVE_PER_REGION))
+  : 3;
 const activeByRegion = new Map();
 let activeResolutions = 0;
 const resolutionWaiters = [];
 
 async function acquireResolutionSlot(region) {
   const queuedAt = Date.now();
-  while (activeResolutions >= maxActiveResolutions || (activeByRegion.get(region) || 0) >= maxActivePerRegion) {
-    await new Promise(resolve => resolutionWaiters.push(resolve));
+  while (
+    activeResolutions >= maxActiveResolutions ||
+    (activeByRegion.get(region) || 0) >= maxActivePerRegion
+  ) {
+    await new Promise((resolve) => resolutionWaiters.push(resolve));
   }
   activeResolutions++;
   activeByRegion.set(region, (activeByRegion.get(region) || 0) + 1);
-  return { queueWaitMs: Date.now() - queuedAt, release() {
-    activeResolutions--;
-    const nextRegionCount = (activeByRegion.get(region) || 1) - 1;
-    if (nextRegionCount <= 0) activeByRegion.delete(region); else activeByRegion.set(region, nextRegionCount);
-    resolutionWaiters.splice(0).forEach(wake => wake());
-  } };
+  return {
+    queueWaitMs: Date.now() - queuedAt,
+    release() {
+      activeResolutions--;
+      const nextRegionCount = (activeByRegion.get(region) || 1) - 1;
+      if (nextRegionCount <= 0) activeByRegion.delete(region);
+      else activeByRegion.set(region, nextRegionCount);
+      resolutionWaiters.splice(0).forEach((wake) => wake());
+    },
+  };
 }
 
 function isResolutionUrl(value) {
-  if (typeof value !== 'string' || !value.trim() || /^(about:blank|chrome-error:\/\/)/i.test(value.trim())) return false;
-  try { return ['http:', 'https:'].includes(new URL(value).protocol); } catch { return false; }
+  if (
+    typeof value !== "string" ||
+    !value.trim() ||
+    /^(about:blank|chrome-error:\/\/)/i.test(value.trim())
+  )
+    return false;
+  try {
+    return ["http:", "https:"].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
 }
 
 function redactSecrets(value) {
-  return String(value || '').replace(/(wss?:\/\/)[^/@\s]+@/gi, '$1[credentials-redacted]@');
+  return String(value || "").replace(
+    /(wss?:\/\/)[^/@\s]+@/gi,
+    "$1[credentials-redacted]@",
+  );
 }
 
 export function getBrowserWss(regionCode) {
@@ -143,54 +171,193 @@ export function getBrowserWss(regionCode) {
 
 function getRandomUserAgent(type) {
   let uaType = type;
-  if (!uaType || uaType === 'random' || (uaType !== 'desktop' && uaType !== 'mobile')) {
-    uaType = Math.random() < 0.5 ? 'desktop' : 'mobile';
+  if (
+    !uaType ||
+    uaType === "random" ||
+    (uaType !== "desktop" && uaType !== "mobile")
+  ) {
+    uaType = Math.random() < 0.5 ? "desktop" : "mobile";
   }
   const uaList = userAgents[uaType];
   const userAgent = uaList[Math.floor(Math.random() * uaList.length)];
-  return { userAgent, isMobile: uaType === 'mobile', uaType };
+  return { userAgent, isMobile: uaType === "mobile", uaType };
 }
 
 /**
-* MAIN FUNCTION
-*/
+ * MAIN FUNCTION
+ */
 export async function resolveWithBrowserAPI(inputUrl, region = "US", uaType) {
   const startedAt = Date.now();
-  const normalizedRegion = String(region || 'US').toUpperCase();
-  const requestId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const normalizedRegion = String(region || "US").toUpperCase();
+  const requestId =
+    globalThis.crypto?.randomUUID?.() ||
+    `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   let browser;
   let page;
   let slot;
+  let redirectChain = [];
+  let navigationTimeoutMs = 0;
+  let retryCount = 0;
   const ownsBrowser = !browserReuseEnabled;
   try {
-    if (!isResolutionUrl(inputUrl)) throw new Error('Invalid URL: only absolute HTTP and HTTPS URLs can be resolved.');
+    if (!isResolutionUrl(inputUrl))
+      throw new Error(
+        "Invalid URL: only absolute HTTP and HTTPS URLs can be resolved.",
+      );
     slot = await acquireResolutionSlot(normalizedRegion);
-    browser = browserReuseEnabled ? await getReusedBrowser(normalizedRegion) : await connectBrowser(normalizedRegion);
-    page = await setupPage(browser, uaType);
-    const timeout = getNavigationTimeout();
-    await navigateToPage(page, inputUrl, timeout);
-    await waitForRedirectsToSettle(page);
-    const finalUrl = page.url();
-    if (!isResolutionUrl(finalUrl)) throw new Error(`Invalid final destination: ${finalUrl || 'empty URL'}`);
-    let ipData = { error: 'IP lookup unavailable' };
+    const baseTimeout = getNavigationTimeout();
+    const retriesAllowed = getSlowUrlRetryCount();
+    let finalUrl = null;
+    for (let attempt = 0; attempt <= retriesAllowed; attempt++) {
+      redirectChain = [];
+      navigationTimeoutMs =
+        attempt === 0 ? baseTimeout : getSlowUrlRetryTimeout(baseTimeout);
+      try {
+        browser = browserReuseEnabled
+          ? await getReusedBrowser(normalizedRegion)
+          : await connectBrowser(normalizedRegion);
+        page = await setupPage(browser, uaType);
+        page.on("request", (request) => {
+          try {
+            if (
+              !request.isNavigationRequest() ||
+              request.frame() !== page.mainFrame()
+            )
+              return;
+            const requestUrl = request.url();
+            if (!/^https?:\/\//i.test(requestUrl)) return;
+            if (redirectChain.at(-1) !== requestUrl)
+              redirectChain.push(requestUrl);
+          } catch {}
+        });
+        await navigateToPage(page, inputUrl, navigationTimeoutMs);
+        await waitForRedirectsToSettle(page);
+        finalUrl = page.url();
+        if (!isResolutionUrl(finalUrl))
+          throw new Error(
+            `Invalid final destination: ${finalUrl || "empty URL"}`,
+          );
+        break;
+      } catch (navigationError) {
+        const canRetry =
+          attempt < retriesAllowed &&
+          isRetryableNavigationError(navigationError);
+        console.warn(
+          JSON.stringify({
+            event: "url_resolution_retry",
+            requestId,
+            timestamp: new Date().toISOString(),
+            requestedCountry: normalizedRegion,
+            host: (() => {
+              try {
+                return new URL(inputUrl).host;
+              } catch {
+                return null;
+              }
+            })(),
+            attempt: attempt + 1,
+            retryScheduled: canRetry,
+            timeoutMs: navigationTimeoutMs,
+            error: redactSecrets(navigationError.message),
+          }),
+        );
+        if (!canRetry) throw navigationError;
+        retryCount++;
+        await page?.close().catch(() => {});
+        page = null;
+        if (browser && ownsBrowser) {
+          await safeCloseBrowser(browser);
+          browser = null;
+        }
+      }
+    }
+    let ipData = { error: "IP lookup unavailable" };
     try {
       ipData = await fetchIPData(page);
-      if (ipData.error) ipData = await fetchCountryFromIsolatedSession(normalizedRegion, ipData.error);
+      if (ipData.error)
+        ipData = await fetchCountryFromIsolatedSession(
+          normalizedRegion,
+          ipData.error,
+        );
     } catch (error) {
-      ipData = await fetchCountryFromIsolatedSession(normalizedRegion, error.message);
+      ipData = await fetchCountryFromIsolatedSession(
+        normalizedRegion,
+        error.message,
+      );
     }
-    const actualCountry = String(ipData?.country_code || '').toUpperCase() || null;
-    const countryMatch = actualCountry ? actualCountry === normalizedRegion : null;
-    const verificationError = countryMatch === true ? null : countryMatch === false
-      ? `Country mismatch: requested ${normalizedRegion}, observed ${actualCountry}.`
-      : `Country verification unavailable for requested ${normalizedRegion}: ${ipData?.error || 'no IP country data returned'}.`;
-    console.info(JSON.stringify({ event: 'url_resolution', requestId, timestamp: new Date().toISOString(), requestedCountry: normalizedRegion, actualCountry, countryMatch, ip: ipData?.ip || null, ipVerificationSource: ipData?.source || null, ipLookupError: ipData?.error || null, host: new URL(inputUrl).host, stage: verificationError ? 'country_verification_failed' : 'completed', queueWaitMs: slot.queueWaitMs, durationMs: Date.now() - startedAt, finalHost: new URL(finalUrl).host }));
-    return { finalUrl, ipData, requestId, durationMs: Date.now() - startedAt, countryMatch, verificationError, error: verificationError };
+    const actualCountry =
+      String(ipData?.country_code || "").toUpperCase() || null;
+    const countryMatch = actualCountry
+      ? actualCountry === normalizedRegion
+      : null;
+    const verificationError =
+      countryMatch === true
+        ? null
+        : countryMatch === false
+          ? `Country mismatch: requested ${normalizedRegion}, observed ${actualCountry}.`
+          : `Country verification unavailable for requested ${normalizedRegion}: ${ipData?.error || "no IP country data returned"}.`;
+    console.info(
+      JSON.stringify({
+        event: "url_resolution",
+        requestId,
+        timestamp: new Date().toISOString(),
+        requestedCountry: normalizedRegion,
+        actualCountry,
+        countryMatch,
+        ip: ipData?.ip || null,
+        ipVerificationSource: ipData?.source || null,
+        ipLookupError: ipData?.error || null,
+        host: new URL(inputUrl).host,
+        stage: verificationError ? "country_verification_failed" : "completed",
+        queueWaitMs: slot.queueWaitMs,
+        durationMs: Date.now() - startedAt,
+        retryCount,
+        navigationTimeoutMs,
+        finalHost: new URL(finalUrl).host,
+      }),
+    );
+    if (redirectChain.at(-1) !== finalUrl) redirectChain.push(finalUrl);
+    return {
+      finalUrl,
+      redirectChain,
+      ipData,
+      requestId,
+      durationMs: Date.now() - startedAt,
+      retryCount,
+      navigationTimeoutMs,
+      countryMatch,
+      verificationError,
+      error: verificationError,
+    };
   } catch (error) {
     let host = null;
-    try { host = new URL(inputUrl).host; } catch {}
-    console.error(JSON.stringify({ event: 'url_resolution', requestId, timestamp: new Date().toISOString(), region: normalizedRegion, host, stage: 'failed', queueWaitMs: slot?.queueWaitMs || 0, durationMs: Date.now() - startedAt, error: redactSecrets(error.message), stack: redactSecrets(error.stack) }));
-    return { error: error.message, requestId, durationMs: Date.now() - startedAt };
+    try {
+      host = new URL(inputUrl).host;
+    } catch {}
+    console.error(
+      JSON.stringify({
+        event: "url_resolution",
+        requestId,
+        timestamp: new Date().toISOString(),
+        region: normalizedRegion,
+        host,
+        stage: "failed",
+        queueWaitMs: slot?.queueWaitMs || 0,
+        durationMs: Date.now() - startedAt,
+        retryCount,
+        navigationTimeoutMs,
+        error: redactSecrets(error.message),
+        stack: redactSecrets(error.stack),
+      }),
+    );
+    return {
+      error: error.message,
+      redirectChain,
+      requestId,
+      durationMs: Date.now() - startedAt,
+      retryCount,
+      navigationTimeoutMs,
+    };
   } finally {
     if (page) await page.close().catch(() => {});
     if (browser && ownsBrowser) await safeCloseBrowser(browser);
@@ -210,7 +377,10 @@ async function getReusedBrowser(region) {
   try {
     const browser = await pending;
     const cachedBrowser = Promise.resolve(browser);
-    browser.once('disconnected', () => { if (reusedBrowsers.get(region) === cachedBrowser) reusedBrowsers.delete(region); });
+    browser.once("disconnected", () => {
+      if (reusedBrowsers.get(region) === cachedBrowser)
+        reusedBrowsers.delete(region);
+    });
     reusedBrowsers.set(region, cachedBrowser);
     return browser;
   } catch (error) {
@@ -220,8 +390,8 @@ async function getReusedBrowser(region) {
 }
 
 /**
-* CONNECT TO REMOTE BROWSER
-*/
+ * CONNECT TO REMOTE BROWSER
+ */
 // async function connectBrowser(region) {
 //   const browserWSEndpoint = getBrowserWss(region);
 
@@ -235,13 +405,15 @@ async function getReusedBrowser(region) {
 //   });
 // }
 /**
-* CONNECT TO REMOTE BROWSER
-*/
+ * CONNECT TO REMOTE BROWSER
+ */
 async function connectBrowser(region) {
   const browserWSEndpoint = getBrowserWss(region);
 
   console.log(`[INFO] Connecting to browser (${region})...`);
-  console.log(`[DEBUG] Remote browser endpoint configured for region ${region} (credentials redacted)`);
+  console.log(
+    `[DEBUG] Remote browser endpoint configured for region ${region} (credentials redacted)`,
+  );
 
   try {
     const browser = await puppeteer.connect({
@@ -261,8 +433,8 @@ async function connectBrowser(region) {
 }
 
 /**
-* SETUP PAGE (UA + VIEWPORT + BLOCKING)
-*/
+ * SETUP PAGE (UA + VIEWPORT + BLOCKING)
+ */
 async function setupPage(browser, uaType) {
   const page = await browser.newPage();
   try {
@@ -278,8 +450,8 @@ async function setupPage(browser, uaType) {
 }
 
 /**
-* BLOCK TRACKERS + HEAVY RESOURCES
-*/
+ * BLOCK TRACKERS + HEAVY RESOURCES
+ */
 async function enableRequestBlocking(page) {
   await page.setRequestInterception(true);
 
@@ -309,8 +481,8 @@ async function enableRequestBlocking(page) {
 }
 
 /**
-* SET VIEWPORT (RANDOMIZED)
-*/
+ * SET VIEWPORT (RANDOMIZED)
+ */
 async function setViewport(page, isMobile) {
   const randomOffset = () => Math.floor(Math.random() * 20) - 10;
 
@@ -332,25 +504,34 @@ async function setViewport(page, isMobile) {
 }
 
 /**
-* NAVIGATION HANDLER
-*/
+ * NAVIGATION HANDLER
+ */
 async function navigateToPage(page, url, timeout) {
-  await page.goto(url, { waitUntil: 'load', timeout });
+  await page.goto(url, { waitUntil: "load", timeout });
   // Wait for late script redirects and the page's remaining network activity.
   // Some ad/analytics sites never become idle, so the idle wait is bounded.
-  await page.waitForNetworkIdle({ idleTime: 1000, timeout: Math.min(timeout, 8000) }).catch(() => {});
+  await page
+    .waitForNetworkIdle({ idleTime: 1000, timeout: Math.min(timeout, 10000) })
+    .catch(() => {});
 }
 
 // Many campaign links redirect from client-side scripts after DOMContentLoaded.
 // Wait for the main frame URL to stop changing before recording the destination.
-async function waitForRedirectsToSettle(page, { stableForMs = 4000, maxWaitMs = 12000 } = {}) {
+async function waitForRedirectsToSettle(
+  page,
+  { stableForMs = 4000, maxWaitMs = 12000 } = {},
+) {
   const startedAt = Date.now();
   let previousUrl = page.url();
   let stableSince = Date.now();
   while (Date.now() - startedAt < maxWaitMs) {
-    await new Promise(resolve => setTimeout(resolve, 250));
+    await new Promise((resolve) => setTimeout(resolve, 250));
     let currentUrl;
-    try { currentUrl = page.url(); } catch { continue; }
+    try {
+      currentUrl = page.url();
+    } catch {
+      continue;
+    }
     if (currentUrl !== previousUrl) {
       previousUrl = currentUrl;
       stableSince = Date.now();
@@ -361,20 +542,51 @@ async function waitForRedirectsToSettle(page, { stableForMs = 4000, maxWaitMs = 
 }
 
 /**
-* TIMEOUT CONFIG
-*/
+ * TIMEOUT CONFIG
+ */
 function getNavigationTimeout() {
   const envTimeout = Number(process.env.NAVIGATION_TIMEOUT);
-  const timeout = Number.isInteger(envTimeout) && envTimeout > 0 ? Math.min(envTimeout, 180000) : 60000;
+  const timeout =
+    Number.isInteger(envTimeout) && envTimeout > 0
+      ? Math.min(envTimeout, 180000)
+      : 60000;
 
   console.log(`[INFO] Navigation timeout: ${timeout} ms`);
 
   return timeout;
 }
 
+function getSlowUrlRetryCount() {
+  if (
+    String(process.env.SLOW_URL_RETRY_ENABLED || "true").toLowerCase() ===
+    "false"
+  )
+    return 0;
+  const configured = Number(process.env.SLOW_URL_MAX_RETRIES);
+  return Number.isInteger(configured) && configured >= 0
+    ? Math.min(configured, 2)
+    : 1;
+}
+
+function getSlowUrlRetryTimeout(baseTimeout) {
+  const configured = Number(process.env.SLOW_URL_RETRY_TIMEOUT);
+  const desired =
+    Number.isInteger(configured) && configured > baseTimeout
+      ? configured
+      : Math.max(baseTimeout + 30000, baseTimeout * 2);
+  return Math.min(180000, desired);
+}
+
+function isRetryableNavigationError(error) {
+  const message = String(error?.message || error || "");
+  return /timeout|timed out|net::err_|ERR_CONNECTION|ERR_NAME_NOT_RESOLVED|execution context was destroyed|chrome-error:\/\//i.test(
+    message,
+  );
+}
+
 /**
-* FETCH IP GEO DATA
-*/
+ * FETCH IP GEO DATA
+ */
 async function fetchIPData(page) {
   // This is a same-session subresource request. Do not navigate this page (or
   // another tab in this session) to a second domain: Bright Data Browser API
@@ -382,48 +594,80 @@ async function fetchIPData(page) {
   return page.evaluate(async () => {
     const lookupErrors = [];
     const providers = [
-      { url: 'https://ipapi.co/json/', parse: data => data },
-      { url: 'https://ipwho.is/', parse: data => data }
+      { url: "https://ipapi.co/json/", parse: (data) => data },
+      { url: "https://ipwho.is/", parse: (data) => data },
     ];
     for (const provider of providers) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5000);
       try {
-        const response = await fetch(provider.url, { signal: controller.signal, cache: 'no-store' });
+        const response = await fetch(provider.url, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = provider.parse(await response.json());
-        if (data.success === false) throw new Error(data.message || 'Provider rejected lookup');
-        const countryCode = String(data.country_code || data.countryCode || '').toUpperCase();
+        if (data.success === false)
+          throw new Error(data.message || "Provider rejected lookup");
+        const countryCode = String(
+          data.country_code || data.countryCode || "",
+        ).toUpperCase();
         if (data.ip && /^[A-Z]{2}$/.test(countryCode)) {
-          return { ip: data.ip, country: data.country_name || data.country || null, country_code: countryCode, region: data.region || data.region_name || null, source: 'resolution_session' };
+          return {
+            ip: data.ip,
+            country: data.country_name || data.country || null,
+            country_code: countryCode,
+            region: data.region || data.region_name || null,
+            source: "resolution_session",
+          };
         }
-        throw new Error('Provider returned no IP or valid ISO country code');
+        throw new Error("Provider returned no IP or valid ISO country code");
       } catch (error) {
-        lookupErrors.push(`${new URL(provider.url).hostname}: ${error.message || 'lookup failed'}`);
+        lookupErrors.push(
+          `${new URL(provider.url).hostname}: ${error.message || "lookup failed"}`,
+        );
       } finally {
         clearTimeout(timer);
       }
     }
-    return { error: lookupErrors.join('; ') || 'All IP geolocation providers failed' };
+    return {
+      error: lookupErrors.join("; ") || "All IP geolocation providers failed",
+    };
   });
 }
 
-async function fetchCountryFromIsolatedSession(region, previousError = '') {
+async function fetchCountryFromIsolatedSession(region, previousError = "") {
   let probeBrowser;
   let page;
   try {
     // Bright Data requires a fresh browser session for a different top-level
     // domain. This fallback still uses the requested country zone.
     probeBrowser = await connectBrowser(region);
-    page = await setupPage(probeBrowser, 'desktop');
-    const response = await page.goto('https://ipwho.is/', { waitUntil: 'load', timeout: 8000 });
-    if (!response?.ok()) throw new Error(`IP country probe returned HTTP ${response?.status() ?? 'no response'}`);
+    page = await setupPage(probeBrowser, "desktop");
+    const response = await page.goto("https://ipwho.is/", {
+      waitUntil: "load",
+      timeout: 8000,
+    });
+    if (!response?.ok())
+      throw new Error(
+        `IP country probe returned HTTP ${response?.status() ?? "no response"}`,
+      );
     const data = await response.json();
-    const countryCode = String(data.country_code || '').toUpperCase();
-    if (data.success === false || !data.ip || !/^[A-Z]{2}$/.test(countryCode)) throw new Error(data.message || 'Probe returned no IP or valid ISO country code');
-    return { ip: data.ip, country: data.country || null, country_code: countryCode, region: data.region || null, source: 'isolated_country_probe', warning: previousError || null };
+    const countryCode = String(data.country_code || "").toUpperCase();
+    if (data.success === false || !data.ip || !/^[A-Z]{2}$/.test(countryCode))
+      throw new Error(
+        data.message || "Probe returned no IP or valid ISO country code",
+      );
+    return {
+      ip: data.ip,
+      country: data.country || null,
+      country_code: countryCode,
+      region: data.region || null,
+      source: "isolated_country_probe",
+      warning: previousError || null,
+    };
   } catch (error) {
-    return { error: [previousError, error.message].filter(Boolean).join('; ') };
+    return { error: [previousError, error.message].filter(Boolean).join("; ") };
   } finally {
     if (page) await page.close().catch(() => {});
     if (probeBrowser) await safeCloseBrowser(probeBrowser);
@@ -431,15 +675,15 @@ async function fetchCountryFromIsolatedSession(region, previousError = '') {
 }
 
 /**
-* VALIDATION
-*/
+ * VALIDATION
+ */
 function isValidUrl(url) {
   return isResolutionUrl(url);
 }
 
 /**
-* SAFE BROWSER CLOSE
-*/
+ * SAFE BROWSER CLOSE
+ */
 async function safeCloseBrowser(browser) {
   try {
     await browser.close();
